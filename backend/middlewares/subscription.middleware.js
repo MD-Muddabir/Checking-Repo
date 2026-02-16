@@ -50,25 +50,19 @@ const checkSubscription = async (req, res, next) => {
 
         if (!subscription) {
             return res.status(403).json({
-                error: "No active subscription found.",
+                error: "No subscription found.",
             });
         }
-        if (
-            subscription.status !== "active" ||
-            new Date(subscription.end_date) < new Date()
-        ) {
-            return res.status(403).json({
-                error: "Subscription inactive. Please renew."
-            });
-        }
-
 
         const today = new Date();
         const endDate = new Date(subscription.end_date);
 
-        if (endDate < today || subscription.payment_status !== "paid") {
+        if (
+            subscription.payment_status !== "paid" ||
+            endDate < today
+        ) {
             return res.status(403).json({
-                error: "Subscription expired. Please renew.",
+                error: "Subscription expired or unpaid.",
             });
         }
 

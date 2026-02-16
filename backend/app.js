@@ -71,6 +71,7 @@ app.get("/", (req, res) => {
  */
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/superadmin", require("./routes/superadmin.routes"));
+app.use("/api/admin", require("./routes/admin.routes"));
 app.use("/api/institutes", require("./routes/institute.routes"));
 app.use("/api/students", require("./routes/student.routes"));
 app.use("/api/faculty", require("./routes/faculty.routes"));
@@ -172,9 +173,12 @@ const syncDatabase = async () => {
     await sequelize.authenticate();
     console.log("✅ Database connection established successfully");
 
+    // Disable foreign key checks
+    // await sequelize.query("SET FOREIGN_KEY_CHECKS = 0");
+
     // Use { alter: true } to update existing tables without dropping data
     // Use { force: true } to drop and recreate tables (WARNING: deletes all data)
-    await sequelize.sync({ alter: false });
+    await sequelize.sync({ alter: true });
     console.log("✅ Database synchronized successfully");
   } catch (error) {
     console.error("❌ Database error:", error.message);

@@ -1,9 +1,9 @@
 
 
 INSERT INTO users 
-(institute_id, role, name, email, password_hash, status)
+(institute_id, role, name, email, password_hash, status, created_at, updated_at)
 VALUES
-(NULL, 'super_admin', 'SaaS Owner', 'owner@saas.com', 'superadmin123', 'active');
+(NULL, 'super_admin', 'SaaS Owner', 'owner@saas.com', 'owneradmin123', 'active', NOW(), NOW());
 
 UPDATE users
 SET 
@@ -15,7 +15,9 @@ WHERE email = 'owner@saas.com';
 
 
 INSERT INTO plans (id, name, price, student_limit, feature_attendance, feature_fees, feature_reports, feature_parent_portal)
-VALUES (1, 'Basic Plan', 2000.00, 500, TRUE, TRUE, TRUE, FALSE);
+VALUES 
+(1, 'Pro Plan', 999.00, 500, 1, 1, 1, 1),
+(1, 'Basic Plan', 2000.00, 500, TRUE, TRUE, TRUE, FALSE);
 
 UPDATE plans SET razorpay_plan_id='plan_ABC123' WHERE id=1;
 
@@ -92,4 +94,5 @@ VALUES
 
 INSERT INTO subscriptions (institute_id, plan_id, start_date, end_date, payment_status, transaction_reference)
 VALUES
+(1, 1, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 YEAR), 'paid', 'TXN123456'),
 (1, 1, '2025-01-01', '2025-12-31', 'paid', 'SUBSCRIPTION_TXN_001');

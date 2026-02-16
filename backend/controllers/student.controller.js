@@ -13,6 +13,7 @@ const { hashPassword } = require("../utils/hashPassword");
  * @route POST /api/students
  * @access Admin, Faculty
  */
+
 exports.createStudent = async (req, res) => {
     try {
         const {
@@ -56,15 +57,16 @@ exports.createStudent = async (req, res) => {
             status: "active",
         });
 
+
         // Create student record
         const student = await Student.create({
             institute_id,
-            user_id: user.id,
+            user_id: user.id || user.user_id,
             roll_number,
-            class_id,
+            class_id: class_id && class_id !== "" ? parseInt(class_id) : null, // Handle empty string from frontend
             admission_date: admission_date || new Date(),
             date_of_birth,
-            gender,
+            gender: gender ? gender.toLowerCase() : null,
             address,
         });
 
@@ -82,6 +84,12 @@ exports.createStudent = async (req, res) => {
             },
         });
     } catch (error) {
+        console.error("========== BACKEND ERROR ==========");
+        console.error(error);
+        console.error("Name:", error.name);
+        console.error("Message:", error.message);
+        console.error("Stack:", error.stack);
+        console.error("===================================");
         res.status(500).json({
             success: false,
             message: error.message,
@@ -122,7 +130,7 @@ exports.getAllStudents = async (req, res) => {
             where: whereClause,
             limit: parseInt(limit),
             offset: parseInt(offset),
-            order: [["created_at", "DESC"]],
+            order: [["id", "DESC"]],
             include: [
                 {
                     model: User,
@@ -145,6 +153,7 @@ exports.getAllStudents = async (req, res) => {
             count: count
         });
     } catch (error) {
+        console.error("Get All Students Error:", error);
         res.status(500).json({
             success: false,
             message: error.message,

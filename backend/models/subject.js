@@ -10,7 +10,7 @@ const Subject = sequelize.define("Subject", {
     tableName: 'subjects',
     timestamps: true,
     createdAt: 'created_at',
-    updatedAt: false
+    updatedAt: 'updated_at'
 });
 
 module.exports = Subject;

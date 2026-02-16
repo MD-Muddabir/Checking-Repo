@@ -47,7 +47,7 @@ exports.getAllSubscriptions = async (req, res) => {
             where: whereClause,
             limit: parseInt(limit),
             offset: parseInt(offset),
-            order: [["created_at", "DESC"]],
+            order: [["createdAt", "DESC"]],
             include: [
                 {
                     model: Institute,

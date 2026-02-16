@@ -9,13 +9,15 @@ const allowRoles = require("../middlewares/role.middleware");
 router.use(verifyToken, checkSubscription);
 
 // Stats Route (must be before :id)
-router.get("/stats", allowRoles("admin", "faculty"), studentController.getStudentStats);
+router.get("/stats", allowRoles("super_admin", "admin", "faculty"), studentController.getStudentStats);
 
 // CRUD Routes
-router.post("/", allowRoles("admin", "faculty"), studentController.createStudent);
-router.get("/", allowRoles("admin", "faculty"), studentController.getAllStudents);
-router.get("/:id", allowRoles("admin", "faculty", "student"), studentController.getStudentById);
-router.put("/:id", allowRoles("admin", "faculty"), studentController.updateStudent);
-router.delete("/:id", allowRoles("admin"), studentController.deleteStudent);
+// router.post("/", allowRoles("admin", "faculty"), studentController.createStudent);
+router.post("/", allowRoles("super_admin", "admin", "faculty"), studentController.createStudent);
+
+router.get("/", allowRoles("super_admin", "admin", "faculty"), studentController.getAllStudents);
+router.get("/:id", allowRoles("super_admin", "admin", "faculty", "student"), studentController.getStudentById);
+router.put("/:id", allowRoles("super_admin", "admin", "faculty"), studentController.updateStudent);
+router.delete("/:id", allowRoles("super_admin", "admin"), studentController.deleteStudent);
 
 module.exports = router;

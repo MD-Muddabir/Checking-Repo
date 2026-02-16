@@ -8,16 +8,14 @@ const { Op } = require("sequelize");
 
 exports.createSubject = async (req, res) => {
     try {
-        const { name, code, class_id, faculty_id, description } = req.body;
+        const { name, class_id, faculty_id } = req.body;
         const institute_id = req.user.institute_id;
 
         const subject = await Subject.create({
             institute_id,
             name,
-            code,
-            class_id,
-            faculty_id,
-            description,
+            class_id: class_id || null,
+            faculty_id: faculty_id || null,
         });
 
         res.status(201).json({
@@ -35,7 +33,7 @@ exports.createSubject = async (req, res) => {
 
 exports.getAllSubjects = async (req, res) => {
     try {
-        const { page = 1, limit = 10, class_id } = req.query;
+        const { page = 1, limit = 100, class_id, search = "" } = req.query;
         const institute_id = req.user.institute_id;
 
         const offset = (page - 1) * limit;
@@ -43,6 +41,10 @@ exports.getAllSubjects = async (req, res) => {
 
         if (class_id) {
             whereClause.class_id = class_id;
+        }
+
+        if (search) {
+            whereClause.name = { [Op.like]: `%${search}%` };
         }
 
         const { count, rows } = await Subject.findAndCountAll({
@@ -53,7 +55,10 @@ exports.getAllSubjects = async (req, res) => {
             include: [
                 {
                     model: Faculty,
-                    attributes: ["id", "specialization"],
+                    attributes: ["id", "designation"],
+                    include: [
+                        { model: require("../models").User, attributes: ["name"] }
+                    ]
                 },
                 {
                     model: Class,
@@ -65,15 +70,8 @@ exports.getAllSubjects = async (req, res) => {
         res.status(200).json({
             success: true,
             message: "Subjects retrieved successfully",
-            data: {
-                subjects: rows,
-                pagination: {
-                    total: count,
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    totalPages: Math.ceil(count / limit),
-                },
-            },
+            data: rows,
+            count: count
         });
     } catch (error) {
         res.status(500).json({

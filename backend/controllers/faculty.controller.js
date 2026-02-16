@@ -131,7 +131,11 @@ exports.getAllFaculty = async (req, res) => {
             data: rows, count // Return array directly for easier frontend handling
         });
     } catch (error) {
-        console.error("Get all faculty error:", error);
+        console.error("========== GET FACULTY ERROR ==========");
+        console.error(error);
+        console.error("Message:", error.message);
+        console.error("Stack:", error.stack);
+        console.error("=======================================");
         res.status(500).json({
             success: false,
             message: error.message,

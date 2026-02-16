@@ -65,17 +65,21 @@ function Students() {
                 await api.put(`/students/${formData.id}`, formData);
                 alert("Student updated successfully");
             } else {
-                await api.post("/students", {
-                    ...formData,
-                    institute_id: user.institute_id,
-                });
+                await api.post("/students", formData);
                 alert("Student added successfully");
             }
             setShowModal(false);
             resetForm();
             fetchStudents();
         } catch (error) {
-            alert("Error: " + error.response?.data?.message);
+            // Only show error if backend really failed
+            if (error.response?.status === 409) {
+                alert(error.response?.data?.message || "Duplicate entry found");
+            } else {
+                alert("Something went wrong");
+            }
+
+            console.error(error.response?.data);
         }
     };
 
@@ -88,10 +92,10 @@ function Students() {
             password: "",
             roll_number: student.roll_number || "",
             class_id: student.class_id || "",
+            admission_date: student.admission_date || "",
             date_of_birth: student.date_of_birth || "",
             gender: student.gender || "male",
             address: student.address || "",
-            admission_date: student.admission_date || "",
         });
         setEditMode(true);
         setShowModal(true);

@@ -23,22 +23,11 @@ function AdminDashboard() {
 
     const fetchStats = async () => {
         try {
-            // TODO: Implement actual API calls
-            // const response = await api.get("/admin/stats");
-            // setStats(response.data);
-
-            // Mock data for now
-            setTimeout(() => {
-                setStats({
-                    totalStudents: 150,
-                    totalFaculty: 25,
-                    totalClasses: 12,
-                    activeStudents: 142,
-                });
-                setLoading(false);
-            }, 500);
+            const response = await api.get("/admin/stats");
+            setStats(response.data.data);
         } catch (error) {
             console.error("Error fetching stats:", error);
+        } finally {
             setLoading(false);
         }
     };

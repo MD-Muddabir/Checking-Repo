@@ -12,10 +12,8 @@ const Student = sequelize.define("Student", {
     gender: DataTypes.ENUM("male", "female", "other"),
     address: DataTypes.TEXT,
 }, {
-    tableName: 'students',
-    timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: false
+    tableName: 'students'
+
 });
 
 module.exports = Student;

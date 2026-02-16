@@ -10,6 +10,7 @@ SELECT * FROM users;
 SELECT * FROM faculty;
 
 SELECT * FROM students;
+DESCRIBE students;
 
 SELECT * FROM classes;
 
