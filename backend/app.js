@@ -178,7 +178,7 @@ const syncDatabase = async () => {
 
     // Use { alter: true } to update existing tables without dropping data
     // Use { force: true } to drop and recreate tables (WARNING: deletes all data)
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ alter: false });
     console.log("✅ Database synchronized successfully");
   } catch (error) {
     console.error("❌ Database error:", error.message);

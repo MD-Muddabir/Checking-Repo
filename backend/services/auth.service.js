@@ -28,7 +28,10 @@ exports.registerInstitute = async (data) => {
 };
 
 exports.loginUser = async (email, password) => {
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({
+        where: { email },
+        include: [{ model: Institute, attributes: ['name'] }]
+    });
 
     if (!user) throw new Error("User not found");
 
@@ -37,4 +40,17 @@ exports.loginUser = async (email, password) => {
     if (!isMatch) throw new Error("Invalid credentials");
 
     return user;
+};
+
+exports.changePassword = async (userId, oldPassword, newPassword) => {
+    const user = await User.findByPk(userId);
+    if (!user) throw new Error("User not found");
+
+    const isMatch = await comparePassword(oldPassword, user.password_hash);
+    if (!isMatch) throw new Error("Incorrect old password");
+
+    const hashedPassword = await hashPassword(newPassword);
+    await user.update({ password_hash: hashedPassword });
+
+    return true;
 };

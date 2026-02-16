@@ -39,7 +39,6 @@ exports.login = async (req, res) => {
         const { email, password } = req.body;
 
         const user = await authService.loginUser(email, password);
-
         const token = generateToken(user);
 
         res.json({
@@ -52,6 +51,7 @@ exports.login = async (req, res) => {
                 email: user.email,
                 role: user.role,
                 institute_id: user.institute_id,
+                institute_name: user.Institute?.name
             },
         });
     } catch (error) {
@@ -61,4 +61,30 @@ exports.login = async (req, res) => {
             message: error.message || "Login failed"
         });
     }
+};
+
+exports.changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        const userId = req.user.id;
+
+        await authService.changePassword(userId, oldPassword, newPassword);
+
+        res.status(200).json({
+            success: true,
+            message: "Password changed successfully"
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+exports.logout = (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Logged out successfully"
+    });
 };

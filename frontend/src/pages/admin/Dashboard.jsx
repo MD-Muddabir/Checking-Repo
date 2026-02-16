@@ -3,12 +3,14 @@
  * Main dashboard for institute administrators
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
+import { AuthContext } from "../../context/AuthContext";
 import "./Dashboard.css";
 
 function AdminDashboard() {
+    const { logout } = useContext(AuthContext);
     const [stats, setStats] = useState({
         totalStudents: 0,
         totalFaculty: 0,
@@ -43,8 +45,13 @@ function AdminDashboard() {
     return (
         <div className="dashboard-container">
             <div className="dashboard-header">
-                <h1>Admin Dashboard</h1>
-                <p>Welcome back! Here's what's happening today.</p>
+                <div>
+                    <h1>Admin Dashboard</h1>
+                    <p>Welcome back! Here's what's happening today.</p>
+                </div>
+                <button onClick={logout} className="btn btn-danger">
+                    Logout
+                </button>
             </div>
 
             <div className="stats-grid">
