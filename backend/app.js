@@ -180,8 +180,12 @@ const syncDatabase = async () => {
 
     // Use { alter: true } to update existing tables without dropping data
     // Use { force: true } to drop and recreate tables (WARNING: deletes all data)
-    await sequelize.sync({ alter: false });
+    await sequelize.sync({ alter: true });
     console.log("✅ Database synchronized successfully");
+
+    // Seed plans if not exists
+    const seedPlans = require("./seeders/seedPlans");
+    await seedPlans();
   } catch (error) {
     console.error("❌ Database error:", error.message);
     console.error("Please ensure MySQL is running and database 'student_saas' exists");

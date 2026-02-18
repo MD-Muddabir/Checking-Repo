@@ -57,6 +57,22 @@ exports.getAllInstitutes = async (req, res) => {
     try {
         const { page = 1, limit = 10, search = "" } = req.query;
 
+        // Auto-update expired statuses
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        await Institute.update(
+            { status: 'expired' },
+            {
+                where: {
+                    status: 'active',
+                    subscription_end: {
+                        [Op.lt]: today
+                    }
+                }
+            }
+        );
+
         const offset = (page - 1) * limit;
 
         const whereClause = search
@@ -67,6 +83,11 @@ exports.getAllInstitutes = async (req, res) => {
                 ],
             }
             : {};
+
+        // Add status filter to query if provided
+        if (req.query.status && req.query.status !== 'all') {
+            whereClause.status = req.query.status;
+        }
 
         const { count, rows } = await Institute.findAndCountAll({
             where: whereClause,

@@ -3,13 +3,15 @@
  * Professional registration with validation and plan selection
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { AuthContext } from "../../context/AuthContext";
 import "./PublicPages.css";
 
 function RegisterPage() {
     const navigate = useNavigate();
+    const { setUser } = useContext(AuthContext);
     const [loading, setLoading] = useState(false);
     const [plans, setPlans] = useState([]);
     const [errors, setErrors] = useState({});
@@ -160,15 +162,61 @@ function RegisterPage() {
             });
 
             if (response.data.success) {
-                // Clear selected plan from localStorage
-                localStorage.removeItem("selectedPlan");
+                // Auto-login logic
+                if (response.data.token) {
+                    localStorage.setItem("token", response.data.token);
+                    localStorage.setItem("user", JSON.stringify(response.data.user));
+                    setUser(response.data.user); // Update context state
 
-                // Show success message
-                alert("Registration successful! Please complete payment to activate your account.");
+                    // Check if selected plan is Paid or Free
+                    // We need to look up the plan details from the plans list we fetched earlier
+                    const selectedPlan = plans.find(p => p.id === parseInt(formData.planId));
 
-                // Redirect to payment page or login
-                // For now, redirect to login
-                navigate("/login");
+                    if (selectedPlan && selectedPlan.price > 0) {
+                        // Paid Plan -> Redirect to Payment
+                        alert("Registration successful! Redirecting to payment...");
+                        navigate("/checkout");
+                    } else {
+                        // Free Plan -> Redirect to Login (as requested) or Dashboard
+                        // Since we auto-logged in, maybe just go to dashboard?
+                        // User explicitly asked: "check this institute user select plan paid or not paid if not paid pan he can select then redirect the login page."
+                        // So I will redirect to login page. 
+                        // Note: If they are logged in, accessing Login page might redirect them to Dashboard anyway based on AuthContext logic.
+                        alert("Registration successful! Redirecting to login...");
+                        // Clear token to force them to login manually as per request?
+                        // "he can select then redirect the login page" -> usually implies they need to sign in.
+                        // But for better UX, we should keep them logged in. 
+                        // Let's redirect to /login. If the code in Login.jsx redirects logged-in users to Dashboard, that's fine.
+                        // BUT, if I want to FORCE them to login manually, I should NOT save the token.
+
+                        // Re-reading user request: "if not paid pan he can select then redirect the login page."
+                        // "if he can select the paid plan after he can redirect the payment page then login page."
+
+                        // Interpretation 1:
+                        // Free -> Login Page (Manual Login)
+                        // Paid -> Payment Page -> Login Page (Manual Login)
+
+                        // Implementation for Interpretation 1:
+                        // 1. Paid: Auto-login (needed for payment), Go to Checkout. After Payment, Logout & Go to Login.
+                        // 2. Free: No Auto-login, Go to Login.
+
+                        if (selectedPlan && selectedPlan.price > 0) {
+                            // Paid: We MUST auto-login to allow payment
+                            alert("Registration successful! Redirecting to payment...");
+                            navigate("/checkout");
+                        } else {
+                            // Free: User wants redirection to login page.
+                            // Let's clear the auto-login trace we just added for consistency with "Manual Login" request
+                            localStorage.removeItem("token");
+                            localStorage.removeItem("user");
+                            alert("Registration successful! Please login to continue.");
+                            navigate("/login");
+                        }
+                    }
+                } else {
+                    // Fallback if no token (shouldn't happen with new backend)
+                    navigate("/login");
+                }
             }
         } catch (error) {
             console.error("Registration error:", error);

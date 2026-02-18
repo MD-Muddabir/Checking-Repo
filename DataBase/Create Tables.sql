@@ -1,3 +1,5 @@
+DROP DATABASE student_saas;
+
 CREATE DATABASE IF NOT EXISTS student_saas;
 
 USE student_saas;

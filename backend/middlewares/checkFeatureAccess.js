@@ -33,7 +33,17 @@ const checkFeatureAccess = (featureName) => {
             }
 
             // Check if feature is enabled in the plan
-            if (institute.Plan[featureName] !== true) {
+            const featureValue = institute.Plan[featureName];
+
+            // Handle Boolean (true/false)
+            let isAllowed = featureValue === true;
+
+            // Handle Enum/String (e.g. 'none', 'basic', 'advanced')
+            if (typeof featureValue === 'string' && featureValue !== 'none') {
+                isAllowed = true;
+            }
+
+            if (!isAllowed) {
                 return res.status(403).json({
                     success: false,
                     message: `Upgrade Required: Your current plan does not include ${featureName.replace("feature_", "").toUpperCase()}. Please upgrade your subscription.`

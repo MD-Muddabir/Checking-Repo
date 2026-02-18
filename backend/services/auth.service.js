@@ -2,7 +2,10 @@ const { Institute, User, Plan, Subscription } = require("../models");
 const { hashPassword, comparePassword } = require("../utils/hashPassword");
 
 exports.registerInstitute = async (data) => {
-    const { instituteName, email, password, phone, planId, address } = data;
+    // Handle both snake_case and camelCase inputs
+    const instituteName = data.instituteName || data.name;
+    const planId = data.planId || data.plan_id;
+    const { email, password, phone, address } = data;
 
     if (!instituteName || !email || !password || !phone || !address || !planId) {
         throw new Error("All fields are required, including plan selection.");
@@ -24,6 +27,10 @@ exports.registerInstitute = async (data) => {
             // If free plan, activate immediately
             if (Number(plan.price) === 0) {
                 instituteStatus = "active";
+            } else {
+                // If paid plan, subscription starts AFTER payment
+                subscriptionStart = null;
+                subscriptionEnd = null;
             }
         }
     }
@@ -36,8 +43,8 @@ exports.registerInstitute = async (data) => {
         address,
         plan_id: planId || null,
         status: instituteStatus,
-        subscription_start: subscriptionStart,
-        subscription_end: subscriptionEnd,
+        subscription_start: instituteStatus === 'active' ? subscriptionStart : null,
+        subscription_end: instituteStatus === 'active' ? subscriptionEnd : null,
     });
 
     // Hash Password
@@ -56,13 +63,16 @@ exports.registerInstitute = async (data) => {
 
     // Create Pending Subscription
     if (planId && plan) {
+        const paymentStatus = instituteStatus === "active" ? "paid" : "pending";
+        const amountPaid = instituteStatus === "active" ? 0 : 0; // Even if paid (free), amount is 0. If pending (paid), amount is 0 until payment.
+
         await Subscription.create({
             institute_id: institute.id,
             plan_id: planId,
             start_date: subscriptionStart,
-            end_date: subscriptionEnd,
-            payment_status: instituteStatus === "active" ? "paid" : "pending", // Mark as paid if active (free)
-            amount_paid: instituteStatus === "active" ? 0 : 0,
+            end_date: subscriptionEnd, // This might be null if pending
+            payment_status: paymentStatus,
+            amount_paid: amountPaid,
         });
     }
 
@@ -100,7 +110,11 @@ exports.changePassword = async (userId, oldPassword, newPassword) => {
 exports.getProfile = async (userId) => {
     const user = await User.findByPk(userId, {
         attributes: ['id', 'name', 'email', 'role', 'institute_id'],
-        include: [{ model: Institute, attributes: ['name'] }]
+        include: [{
+            model: Institute,
+            attributes: ['name', 'status', 'plan_id'],
+            include: [{ model: Plan, attributes: ['id', 'name', 'price'] }] // Include Plan details
+        }]
     });
     if (!user) throw new Error("User not found");
     return user;

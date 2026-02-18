@@ -85,9 +85,20 @@ exports.registerInstitute = async (req, res) => {
             status: "pending" // Institute starts as pending until payment
         });
 
+        const token = generateToken(result.adminUser);
+
         res.status(201).json({
             success: true,
             message: "Registration successful! Please complete payment to activate your account.",
+            token,
+            user: {
+                id: result.adminUser.id,
+                name: result.adminUser.name,
+                email: result.adminUser.email,
+                role: result.adminUser.role,
+                institute_id: result.institute.id,
+                institute_name: result.institute.name
+            },
             data: {
                 institute_id: result.institute.id,
                 email: result.institute.email,
@@ -105,7 +116,7 @@ exports.registerInstitute = async (req, res) => {
             });
         }
 
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message || "Registration failed"
         });

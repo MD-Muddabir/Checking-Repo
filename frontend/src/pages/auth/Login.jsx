@@ -57,7 +57,26 @@ function Login() {
           navigate("/");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      if (err.response?.status === 402 || err.response?.data?.code === 'PAYMENT_REQUIRED') {
+        // Redirect to payment if subscription is pending
+        const pendingUser = err.response.data.user; // If backend sends user data on 402, otherwise we might need another way
+        // But usually Login fails fully. 
+        // Let's check how checkSubscription middleware behaves. 
+        // Actually, Login API (auth.controller) does NOT use checkSubscription. 
+        // So user CAN login, but subsequent API calls will fail with 402.
+        // However, if the user account is created but not activated, they can login. 
+        // The redirection happens AFTER login when they try to access Dashboard.
+
+        // Wait, if login is successful, we go to dashboard.
+        // Then dashboard API calls (e.g. stats) will fail with 402.
+        // So we need to handle 402 in the AXIOS INTERCEPTOR or in the Dashboard page.
+
+        // BUT, if we want to catch it here (if we decide to block login for unpaid):
+        // Current implementation allows login. 
+        setError(err.response?.data?.message || "Login failed. Please try again.");
+      } else {
+        setError(err.response?.data?.message || "Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

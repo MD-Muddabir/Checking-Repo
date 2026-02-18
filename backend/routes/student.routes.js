@@ -4,6 +4,7 @@ const studentController = require("../controllers/student.controller");
 const verifyToken = require("../middlewares/auth.middleware");
 const checkSubscription = require("../middlewares/subscription.middleware");
 const allowRoles = require("../middlewares/role.middleware");
+const { checkStudentLimit } = require("../middlewares/planLimits.middleware");
 
 // All routes require authentication and valid subscription
 router.use(verifyToken, checkSubscription);
@@ -13,7 +14,7 @@ router.get("/stats", allowRoles("super_admin", "admin", "faculty"), studentContr
 
 // CRUD Routes
 // router.post("/", allowRoles("admin", "faculty"), studentController.createStudent);
-router.post("/", allowRoles("super_admin", "admin", "faculty"), studentController.createStudent);
+router.post("/", allowRoles("super_admin", "admin", "faculty"), checkStudentLimit, studentController.createStudent);
 
 router.get("/", allowRoles("super_admin", "admin", "faculty"), studentController.getAllStudents);
 router.get("/:id", allowRoles("super_admin", "admin", "faculty", "student"), studentController.getStudentById);

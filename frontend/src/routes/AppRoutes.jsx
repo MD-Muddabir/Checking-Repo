@@ -12,11 +12,13 @@ import LoadingSpinner from "../components/common/LoadingSpinner";
 // Lazy load pages for code splitting
 // Public Pages
 const Home = lazy(() => import("../pages/public/Home"));
-const Pricing = lazy(() => import("../pages/public/Pricing"));
+const Pricing = lazy(() => import("../pages/public/PricingPage")); // Updated to PricingPage
+const Contact = lazy(() => import("../pages/public/ContactPage")); // Added Contact
+const PaymentAndCheckout = lazy(() => import("../pages/public/PaymentPage")); // Added Payment
 
 // Auth Pages
 const Login = lazy(() => import("../pages/auth/Login"));
-const Register = lazy(() => import("../pages/auth/Register"));
+const Register = lazy(() => import("../pages/public/RegisterPage")); // Use Public Register Page
 const ForgotPassword = lazy(() => import("../pages/auth/ForgotPassword"));
 
 // Super Admin Pages
@@ -76,9 +78,11 @@ function AppRoutes() {
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/renew-plan" element={<Pricing />} /> {/* Renewal Flow */}
+        <Route path="/checkout" element={<PaymentAndCheckout />} /> {/* Payment Flow */}
         <Route path="/features" element={<Home />} />
         <Route path="/about" element={<Home />} />
-        <Route path="/contact" element={<Home />} />
+        <Route path="/contact" element={<Contact />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

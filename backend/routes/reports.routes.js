@@ -9,9 +9,10 @@ const reportsController = require("../controllers/reports.controller");
 const verifyToken = require("../middlewares/auth.middleware");
 const allowRoles = require("../middlewares/role.middleware");
 const checkFeatureAccess = require("../middlewares/checkFeatureAccess");
+const checkSubscription = require("../middlewares/subscription.middleware");
 
 // Institute-level reports (require feature_reports)
-router.use(verifyToken);
+router.use(verifyToken, checkSubscription);
 
 // Dashboard analytics
 router.get("/dashboard", allowRoles("admin", "faculty"), checkFeatureAccess("feature_reports"), reportsController.getDashboardAnalytics);
