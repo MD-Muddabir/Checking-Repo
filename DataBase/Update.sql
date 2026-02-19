@@ -1,7 +1,12 @@
 UPDATE institutes
-SET plan_id = '1'
-WHERE email = 'ithub@gmail.com';
+SET subscription_start = '2026-01-16',
+	subscription_end = '2026-02-17'
+WHERE id = 11;
 
 UPDATE subscriptions
-SET amount_paid = '999'
-WHERE id = '1';
+SET start_date = '2026-01-16',
+	end_date = '2026-02-17'
+WHERE id = 13;
+
+Delete  from institutes
+where id = 14;

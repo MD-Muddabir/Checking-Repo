@@ -25,4 +25,42 @@ router.get(
     getUsageStats
 );
 
+// --- Admin Management Routes ---
+
+// Get all admins
+router.get(
+    "/admins",
+    verifyToken,
+    checkSubscription,
+    allowRoles("admin"),
+    adminController.getAllAdmins
+);
+
+// Create new admin
+router.post(
+    "/admins",
+    verifyToken,
+    checkSubscription,
+    allowRoles("admin"),
+    adminController.createAdmin
+);
+
+// Delete admin
+router.delete(
+    "/admins/:id",
+    verifyToken,
+    checkSubscription,
+    allowRoles("admin"),
+    adminController.deleteAdmin
+);
+
+// Update admin
+router.put(
+    "/admins/:id",
+    verifyToken,
+    checkSubscription,
+    allowRoles("admin"),
+    adminController.updateAdmin
+);
+
 module.exports = router;

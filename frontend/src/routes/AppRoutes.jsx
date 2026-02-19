@@ -42,6 +42,7 @@ const Fees = lazy(() => import("../pages/admin/Fees"));
 const Announcements = lazy(() => import("../pages/admin/Announcements"));
 const Settings = lazy(() => import("../pages/admin/Settings"));
 const Profile = lazy(() => import("../pages/admin/Profile"));
+const ManageAdmins = lazy(() => import("../pages/admin/ManageAdmins")); // Added ManageAdmins
 
 // Faculty Pages
 const FacultyDashboard = lazy(() => import("../pages/faculty/Dashboard"));
@@ -113,6 +114,7 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={["admin"]}>
               <Routes>
                 <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="admins" element={<ManageAdmins />} />
                 <Route path="students" element={<Students />} />
                 <Route path="faculty" element={<Faculty />} />
                 <Route path="classes" element={<Classes />} />

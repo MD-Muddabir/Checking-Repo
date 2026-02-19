@@ -3,6 +3,7 @@
 INSERT INTO users 
 (institute_id, role, name, email, password_hash, status, created_at, updated_at)
 VALUES
+(2 , admin, 'CSE', 'cse@gmail.com', 7887659879, '123456',	active,	2026-01-16 ,2026-01-17);
 (NULL, 'super_admin', 'SaaS Owner', 'owner@saas.com', 'owneradmin123', 'active', NOW(), NOW());
 
 UPDATE users
@@ -92,7 +93,10 @@ VALUES
 (1, 1, 2, 1, 78, 100),
 (1, 2, 3, 3, 90, 100);
 
-INSERT INTO subscriptions (institute_id, plan_id, start_date, end_date, payment_status, transaction_reference)
+-- id ,plan_id ,name ,email ,phone ,address ,logo ,subscription_start ,subscription_end ,status
+
+INSERT INTO subscriptions (id ,plan_id , name,email ,phone ,address ,logo ,subscription_start ,subscription_end ,status)
 VALUES
-(1, 1, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 1 YEAR), 'paid', 'TXN123456'),
+(3, 1,'CSE', 'cse@gmail.com', 8275668622, 'Hyderabad','','2026-01-16',DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'paid');
+(1, 1, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'paid', 'TXN123456'),
 (1, 1, '2025-01-01', '2025-12-31', 'paid', 'SUBSCRIPTION_TXN_001');

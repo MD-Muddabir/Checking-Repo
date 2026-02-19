@@ -5,7 +5,8 @@ exports.registerInstitute = async (data) => {
     // Handle both snake_case and camelCase inputs
     const instituteName = data.instituteName || data.name;
     const planId = data.planId || data.plan_id;
-    const { email, password, phone, address } = data;
+    const { email, password, phone, address, city, state, pincode, zip_code } = data;
+    const finalZipCode = zip_code || pincode; // Handle both keys
 
     if (!instituteName || !email || !password || !phone || !address || !planId) {
         throw new Error("All fields are required, including plan selection.");
@@ -41,6 +42,9 @@ exports.registerInstitute = async (data) => {
         email,
         phone,
         address,
+        city,
+        state,
+        zip_code: finalZipCode,
         plan_id: planId || null,
         status: instituteStatus,
         subscription_start: instituteStatus === 'active' ? subscriptionStart : null,

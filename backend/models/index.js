@@ -1,5 +1,7 @@
 const sequelize = require("../config/database");
 
+// Relationships: The connections between tables (like "One User belongs to One Institute")
+
 const Plan = require("./plan");
 const Institute = require("./institute");
 const User = require("./user");

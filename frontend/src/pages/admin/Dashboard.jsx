@@ -150,6 +150,14 @@ function AdminDashboard() {
 
             <div className="stats-grid">
                 <div className="stat-card">
+                    <div className="stat-icon">👥</div>
+                    <div className="stat-content">
+                        <h3>{stats.totalAdmins || 0} / {planDetails?.plan?.max_admin_users || 1}</h3>
+                        <p>Total Admins</p>
+                    </div>
+                </div>
+
+                <div className="stat-card">
                     <div className="stat-icon">👨‍🎓</div>
                     <div className="stat-content">
                         <h3>{stats.totalStudents} / {planDetails?.usage?.students?.limit || '∞'}</h3>
@@ -185,6 +193,7 @@ function AdminDashboard() {
             <div className="quick-actions">
                 <h2>Quick Actions</h2>
                 <div className="action-grid">
+                    <ActionCard path="/admin/admins" icon="👥" title="Manage Admins" featureKey="admins" />
                     <ActionCard path="/admin/students" icon="👨‍🎓" title="Manage Students" featureKey="students" />
                     <ActionCard path="/admin/faculty" icon="👩‍🏫" title="Manage Faculty" featureKey="faculty" />
                     <ActionCard path="/admin/classes" icon="📚" title="Manage Classes" featureKey="classes" />

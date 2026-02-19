@@ -167,6 +167,8 @@ app.use((err, req, res, next) => {
  * Creates tables if they don't exist
  * Use { alter: true } in development, { force: false } in production
  */
+
+// Creation Logic: The command that actually creates or updates the tables in the database
 const { sequelize } = require("./models");
 
 const syncDatabase = async () => {
