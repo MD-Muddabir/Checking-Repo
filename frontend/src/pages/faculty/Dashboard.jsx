@@ -39,6 +39,9 @@ function FacultyDashboard() {
                     {user?.features?.attendance !== 'none' && (
                         <ActionCard path="/faculty/attendance" icon="📋" title="Mark Attendance" />
                     )}
+                    {user?.features?.attendance !== 'none' && (
+                        <ActionCard path="/faculty/view-attendance" icon="📊" title="View Attendance" />
+                    )}
                     {user?.features?.auto_attendance && (
                         <ActionCard path="/faculty/smart-attendance" icon="📸" title="Scan Student QR" />
                     )}

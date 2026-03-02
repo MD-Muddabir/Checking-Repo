@@ -49,7 +49,7 @@ const Profile = lazy(() => import("../pages/admin/Profile"));
 const ManageAdmins = lazy(() => import("../pages/admin/ManageAdmins")); // Added ManageAdmins
 const AdminSmartAttendance = lazy(() => import("../pages/admin/SmartAttendance"));
 const AdminExpenses = lazy(() => import("../pages/admin/Expenses"));
-
+const FacultyViewAttendance = lazy(() => import("../pages/faculty/ViewAttendance"));
 // Faculty Pages
 const FacultyDashboard = lazy(() => import("../pages/faculty/Dashboard"));
 const MarkAttendance = lazy(() => import("../pages/faculty/MarkAttendance"));
@@ -133,6 +133,7 @@ function AppRoutes() {
                 <Route path="classes" element={<Classes />} />
                 <Route path="subjects" element={<Subjects />} />
                 <Route path="attendance" element={<Attendance />} />
+                <Route path="view-attendance" element={<FacultyViewAttendance />} />
                 <Route path="smart-attendance" element={<AdminSmartAttendance />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="fees" element={<Fees />} />
@@ -155,6 +156,7 @@ function AppRoutes() {
               <Routes>
                 <Route path="dashboard" element={<FacultyDashboard />} />
                 <Route path="attendance" element={<MarkAttendance />} />
+                <Route path="view-attendance" element={<FacultyViewAttendance />} />
                 <Route path="smart-attendance" element={<FacultySmartAttendance />} />
                 <Route path="marks" element={<EnterMarks />} />
                 <Route path="students" element={<ViewStudents />} />

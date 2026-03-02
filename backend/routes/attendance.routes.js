@@ -19,6 +19,9 @@ router.post("/bulk", allowRoles("admin", "faculty"), attendanceController.markBu
 // Get attendance for specific class, subject, and date
 router.get("/class/:class_id/subject/:subject_id/date/:date", allowRoles("admin", "faculty"), attendanceController.getClassAttendanceByDate);
 
+// Get attendance grid data for class and subject matching date ranges
+router.get("/class/:class_id/subject/:subject_id/grid", allowRoles("admin", "faculty"), attendanceController.getClassAttendanceGrid);
+
 // Update attendance (admin only)
 router.put("/:id", allowRoles("admin"), attendanceController.updateAttendance);
 
