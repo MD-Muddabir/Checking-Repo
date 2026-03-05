@@ -109,6 +109,12 @@ function AdminDashboard() {
                     featureName = "Smart Attendance (QR)";
                 }
                 break;
+            case 'timetable':
+                if (!features.timetable) {
+                    hasAccess = false;
+                    featureName = "Master Timetable";
+                }
+                break;
             default:
                 hasAccess = true;
         }
@@ -139,7 +145,8 @@ function AdminDashboard() {
                 (featureKey === 'announcements' && !planDetails.features.announcements) ||
                 (featureKey === 'attendance' && planDetails.features.attendance === 'none') ||
                 (featureKey === 'reports' && planDetails.features.reports === 'none') ||
-                (featureKey === 'auto_attendance' && !planDetails.features.auto_attendance)
+                (featureKey === 'auto_attendance' && !planDetails.features.auto_attendance) ||
+                (featureKey === 'timetable' && !planDetails.features.timetable)
             ) && (
                     <span style={{ position: 'absolute', top: 5, right: 5, fontSize: '10px', background: '#e5e7eb', padding: '2px 5px', borderRadius: '4px' }}>🔒</span>
                 )}
@@ -219,6 +226,9 @@ function AdminDashboard() {
                     )}
                     {hasPermission('students') && <ActionCard path={`${basePath}/students`} icon="👨‍🎓" title="Manage Students" featureKey="students" />}
                     {hasPermission('faculty') && <ActionCard path={`${basePath}/faculty`} icon="👩‍🏫" title="Manage Faculty" featureKey="faculty" />}
+                    {hasPermission('attendance') && <ActionCard path={`${basePath}/faculty-attendance`} icon="📋" title="Faculty Attendance" featureKey="attendance" />}
+                    {hasPermission('attendance') && <ActionCard path={`${basePath}/view-faculty-attendance`} icon="📊" title="Faculty Tracker" featureKey="attendance" />}
+                    {hasPermission('attendance') && <ActionCard path={`${basePath}/scan-faculty-qr`} icon="📸" title="Scan Faculty QR" featureKey="attendance" />}
                     {hasPermission('classes') && <ActionCard path={`${basePath}/classes`} icon="📚" title="Manage Classes" featureKey="classes" />}
                     {hasPermission('subjects') && <ActionCard path={`${basePath}/subjects`} icon="📖" title="Manage Subjects" featureKey="subjects" />}
 
@@ -229,6 +239,7 @@ function AdminDashboard() {
                     {hasPermission('expenses') && <ActionCard path={`${basePath}/expenses`} icon="💸" title="Finances & Transport" featureKey="expenses" />}
                     {hasPermission('fees') && <ActionCard path={`${basePath}/fees`} icon="💰" title="Fee Management" featureKey="fees" />}
                     {hasPermission('exams') && <ActionCard path={`${basePath}/exams`} icon="📝" title="Manage Exams" featureKey="exams" />}
+                    {hasPermission('classes') && <ActionCard path={`${basePath}/timetable`} icon="📅" title="Master Timetable" featureKey="timetable" />}
                     {hasPermission('announcements') && <ActionCard path={`${basePath}/announcements`} icon="📢" title="Announcements" featureKey="announcements" />}
 
                     {user?.role === 'admin' && (

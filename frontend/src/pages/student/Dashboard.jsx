@@ -41,10 +41,11 @@ function StudentDashboard() {
                     {user?.features?.auto_attendance && (
                         <ActionCard path="/student/scan-attendance" icon="🤳" title="My QR Code" />
                     )}
-                    <ActionCard path="/student/marks" icon="📝" title="View Marks" />
+                    <ActionCard path="/student/exams" icon="📝" title="View Marks" />
                     {user?.features?.fees && (
-                        <ActionCard path="/student/pay-fees" icon="💳" title="Pay Fees" />
+                        <ActionCard path="/student/fees" icon="💳" title="Pay Fees" />
                     )}
+                    <ActionCard path="/student/timetable" icon="📅" title="My Timetable" />
                     {user?.features?.announcements && (
                         <ActionCard path="/student/announcements" icon="📢" title="Announcements" />
                     )}

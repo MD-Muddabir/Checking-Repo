@@ -49,6 +49,10 @@ const Profile = lazy(() => import("../pages/admin/Profile"));
 const ManageAdmins = lazy(() => import("../pages/admin/ManageAdmins")); // Added ManageAdmins
 const AdminSmartAttendance = lazy(() => import("../pages/admin/SmartAttendance"));
 const AdminExpenses = lazy(() => import("../pages/admin/Expenses"));
+const AdminTimetable = lazy(() => import("../pages/admin/Timetable"));
+const AdminFacultyAttendance = lazy(() => import("../pages/admin/FacultyAttendance")); // Added FacultyAttendance Scanner
+const AdminFacultyViewAttendance = lazy(() => import("../pages/admin/AdminFacultyViewAttendance"));
+const AdminManageFacultyAttendance = lazy(() => import("../pages/admin/AdminManageFacultyAttendance"));
 const FacultyViewAttendance = lazy(() => import("../pages/faculty/ViewAttendance"));
 // Faculty Pages
 const FacultyDashboard = lazy(() => import("../pages/faculty/Dashboard"));
@@ -57,6 +61,8 @@ const EnterMarks = lazy(() => import("../pages/faculty/EnterMarks"));
 const ViewStudents = lazy(() => import("../pages/faculty/ViewStudents"));
 const FacultySmartAttendance = lazy(() => import("../pages/admin/SmartAttendance")); // Reuse admin page
 const FacultyAnnouncements = lazy(() => import("../pages/faculty/Announcements")); // Added Announcements
+const FacultySchedule = lazy(() => import("../pages/faculty/MySchedule")); // Added Timetable
+const ScanFacultyQR = lazy(() => import("../pages/faculty/ScanFacultyQR")); // Added ScanFacultyQR
 
 // Student Pages
 const StudentDashboard = lazy(() => import("../pages/student/Dashboard"));
@@ -65,6 +71,7 @@ const ViewMarks = lazy(() => import("../pages/student/ViewMarks"));
 const ViewAnnouncements = lazy(() => import("../pages/student/ViewAnnouncements"));
 const PayFees = lazy(() => import("../pages/student/PayFees"));
 const ScanAttendance = lazy(() => import("../pages/student/ScanAttendance"));
+const StudentTimetable = lazy(() => import("../pages/student/Timetable")); // Added Timetable
 
 // Common Pages
 const NotFound = lazy(() => import("../pages/common/NotFound"));
@@ -133,12 +140,16 @@ function AppRoutes() {
                 <Route path="classes" element={<Classes />} />
                 <Route path="subjects" element={<Subjects />} />
                 <Route path="attendance" element={<Attendance />} />
+                <Route path="faculty-attendance" element={<AdminManageFacultyAttendance />} />
+                <Route path="scan-faculty-qr" element={<AdminFacultyAttendance />} />
+                <Route path="view-faculty-attendance" element={<AdminFacultyViewAttendance />} />
                 <Route path="view-attendance" element={<FacultyViewAttendance />} />
                 <Route path="smart-attendance" element={<AdminSmartAttendance />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="fees" element={<Fees />} />
                 <Route path="announcements" element={<Announcements />} />
                 <Route path="exams" element={<Exams />} />
+                <Route path="timetable" element={<AdminTimetable />} />
                 <Route path="expenses" element={<AdminExpenses />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="profile" element={<Profile />} />
@@ -158,9 +169,11 @@ function AppRoutes() {
                 <Route path="attendance" element={<MarkAttendance />} />
                 <Route path="view-attendance" element={<FacultyViewAttendance />} />
                 <Route path="smart-attendance" element={<FacultySmartAttendance />} />
+                <Route path="scan-attendance" element={<ScanFacultyQR />} />
                 <Route path="marks" element={<EnterMarks />} />
                 <Route path="students" element={<ViewStudents />} />
                 <Route path="announcements" element={<FacultyAnnouncements />} />
+                <Route path="timetable" element={<FacultySchedule />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="*" element={<Navigate to="/faculty/dashboard" />} />
               </Routes>
@@ -177,9 +190,11 @@ function AppRoutes() {
                 <Route path="dashboard" element={<StudentDashboard />} />
                 <Route path="attendance" element={<ViewAttendance />} />
                 <Route path="scan-attendance" element={<ScanAttendance />} />
-                <Route path="marks" element={<ViewMarks />} />
+                <Route path="exams" element={<ViewMarks />} />
                 <Route path="announcements" element={<ViewAnnouncements />} />
-                <Route path="pay-fees" element={<PayFees />} />
+                <Route path="fees" element={<PayFees />} />
+                <Route path="buy-plan" element={<Pricing />} />
+                <Route path="timetable" element={<StudentTimetable />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="*" element={<Navigate to="/student/dashboard" />} />
               </Routes>

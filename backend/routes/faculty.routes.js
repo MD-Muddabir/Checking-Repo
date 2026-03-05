@@ -17,6 +17,7 @@ const allowRoles = require("../middlewares/role.middleware");
  */
 const { checkFacultyLimit } = require("../middlewares/planLimits.middleware");
 
+router.get("/me", verifyToken, checkSubscription, allowRoles("faculty"), facultyController.getMe);
 router.post("/", verifyToken, checkSubscription, allowRoles("admin"), checkFacultyLimit, facultyController.createFaculty);
 
 /**
@@ -36,9 +37,9 @@ router.get("/:id", verifyToken, checkSubscription, allowRoles("admin", "faculty"
 /**
  * @route   PUT /api/faculty/:id
  * @desc    Update faculty details
- * @access  Admin only
+ * @access  Admin, Faculty (own record)
  */
-router.put("/:id", verifyToken, checkSubscription, allowRoles("admin"), facultyController.updateFaculty);
+router.put("/:id", verifyToken, checkSubscription, allowRoles("admin", "faculty"), facultyController.updateFaculty);
 
 /**
  * @route   DELETE /api/faculty/:id

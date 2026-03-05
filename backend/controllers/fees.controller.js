@@ -79,13 +79,19 @@ exports.getAllFeeStructures = async (req, res) => {
                 include: [{ model: require("../models").Subject }]
             });
             if (studentObj) {
+                const filteredFees = [];
                 for (let fee of feesWithPayments) {
                     const payments = await Payment.findAll({
                         where: { student_id: studentObj.id, fee_structure_id: fee.id, status: 'success' }
                     });
                     fee.paid_amount = payments.reduce((sum, p) => sum + parseFloat(p.amount_paid), 0);
                     fee.is_enrolled = !!(fee.subject_id && studentObj.Subjects?.find(s => s.id === fee.subject_id));
+
+                    if (!fee.subject_id || fee.is_enrolled) {
+                        filteredFees.push(fee);
+                    }
                 }
+                feesWithPayments = filteredFees;
             }
         }
 

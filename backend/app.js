@@ -75,6 +75,7 @@ app.use("/api/admin", require("./routes/admin.routes"));
 app.use("/api/institutes", require("./routes/institute.routes"));
 app.use("/api/students", require("./routes/student.routes"));
 app.use("/api/faculty", require("./routes/faculty.routes"));
+app.use("/api/faculty-attendance", require("./routes/facultyAttendance.routes"));
 app.use("/api/classes", require("./routes/class.routes"));
 app.use("/api/subjects", require("./routes/subject.routes"));
 app.use("/api/attendance", require("./routes/attendance.routes"));
@@ -87,6 +88,7 @@ app.use("/api/plans", require("./routes/plan.routes"));
 app.use("/api/payment", require("./routes/payment.routes"));
 app.use("/api/invoice", require("./routes/invoice.routes"));
 app.use("/api/expenses", require("./routes/expense.routes"));
+app.use("/api/timetable", require("./routes/timetable.routes"));
 app.use("/api/webhook", require("./routes/webhook.routes"));
 
 // ============================================

@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import api from "../../services/api";
 import BackButton from "../../components/common/BackButton";
+import ThemeSelector from "../../components/ThemeSelector";
 import "../admin/Dashboard.css";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -126,7 +127,8 @@ function Subscriptions() {
                     <h1>💳 Subscriptions Management</h1>
                     <p>Track and manage institute subscriptions</p>
                 </div>
-                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <div className="dashboard-header-right">
+                    <ThemeSelector />
                     <button onClick={() => handleExport("PDF")} className="btn btn-primary" style={{ backgroundColor: "#ef4444", borderColor: "#ef4444" }}>📄 PDF</button>
                     <button onClick={() => handleExport("Excel")} className="btn btn-primary" style={{ backgroundColor: "#10b981", borderColor: "#10b981" }}>📊 Excel</button>
                     <BackButton />

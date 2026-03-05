@@ -106,6 +106,10 @@ const Plan = sequelize.define("Plan", {
         type: DataTypes.BOOLEAN,
         defaultValue: false
     },
+    feature_timetable: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
 
     // Premium Features
     feature_custom_branding: {

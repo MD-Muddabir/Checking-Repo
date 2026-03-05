@@ -19,7 +19,7 @@ router.post("/", allowRoles("super_admin", "admin", "faculty"), checkStudentLimi
 
 router.get("/", allowRoles("super_admin", "admin", "faculty"), studentController.getAllStudents);
 router.get("/:id", allowRoles("super_admin", "admin", "faculty", "student"), studentController.getStudentById);
-router.put("/:id", allowRoles("super_admin", "admin", "faculty"), studentController.updateStudent);
+router.put("/:id", allowRoles("super_admin", "admin", "faculty", "student"), studentController.updateStudent);
 router.delete("/:id", allowRoles("super_admin", "admin"), studentController.deleteStudent);
 
 module.exports = router;

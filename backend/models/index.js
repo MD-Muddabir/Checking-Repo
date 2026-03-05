@@ -10,6 +10,7 @@ const Student = require("./student");
 const Faculty = require("./faculty");
 const Subject = require("./subject");
 const Attendance = require("./attendance");
+const FacultyAttendance = require("./facultyAttendance");
 const FeesStructure = require("./feesStructure");
 const Payment = require("./payment");
 const Announcement = require("./announcement");
@@ -20,6 +21,8 @@ const StudentSubject = require("./studentSubject");
 const StudentClass = require("./studentClass");
 const ClassSession = require("./classSession");
 const Expense = require("./expense");
+const TimetableSlot = require("./timetableSlot");
+const Timetable = require("./timetable");
 
 // Associations
 
@@ -125,6 +128,16 @@ Institute.hasMany(Attendance, { foreignKey: "institute_id" });
 Attendance.belongsTo(User, { as: "marker", foreignKey: "marked_by" });
 User.hasMany(Attendance, { foreignKey: "marked_by" });
 
+// Faculty Attendance Associations
+FacultyAttendance.belongsTo(Faculty, { foreignKey: "faculty_id" });
+Faculty.hasMany(FacultyAttendance, { foreignKey: "faculty_id" });
+
+FacultyAttendance.belongsTo(Institute, { foreignKey: "institute_id" });
+Institute.hasMany(FacultyAttendance, { foreignKey: "institute_id" });
+
+FacultyAttendance.belongsTo(User, { as: "marker", foreignKey: "marked_by" });
+User.hasMany(FacultyAttendance, { foreignKey: "marked_by" });
+
 // Subscription Associations
 Institute.hasMany(Subscription, { foreignKey: "institute_id" });
 Subscription.belongsTo(Institute, { foreignKey: "institute_id" });
@@ -146,6 +159,28 @@ Subject.hasMany(ClassSession, { foreignKey: "subject_id" });
 ClassSession.belongsTo(User, { as: "faculty", foreignKey: "faculty_id" });
 User.hasMany(ClassSession, { foreignKey: "faculty_id" });
 
+// Timetable Associations
+TimetableSlot.belongsTo(Institute, { foreignKey: "institute_id" });
+Institute.hasMany(TimetableSlot, { foreignKey: "institute_id" });
+
+Timetable.belongsTo(Institute, { foreignKey: "institute_id" });
+Institute.hasMany(Timetable, { foreignKey: "institute_id" });
+
+Timetable.belongsTo(Class, { foreignKey: "class_id" });
+Class.hasMany(Timetable, { foreignKey: "class_id" });
+
+Timetable.belongsTo(Subject, { foreignKey: "subject_id" });
+Subject.hasMany(Timetable, { foreignKey: "subject_id" });
+
+Timetable.belongsTo(Faculty, { foreignKey: "faculty_id" });
+Faculty.hasMany(Timetable, { foreignKey: "faculty_id" });
+
+Timetable.belongsTo(TimetableSlot, { foreignKey: "slot_id" });
+TimetableSlot.hasMany(Timetable, { foreignKey: "slot_id" });
+
+Timetable.belongsTo(User, { as: "creator", foreignKey: "created_by" });
+User.hasMany(Timetable, { foreignKey: "created_by" });
+
 module.exports = {
     sequelize,
     Plan,
@@ -166,4 +201,7 @@ module.exports = {
     StudentClass,
     ClassSession,
     Expense,
+    TimetableSlot,
+    Timetable,
+    FacultyAttendance
 };

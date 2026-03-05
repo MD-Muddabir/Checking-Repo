@@ -45,7 +45,9 @@ function FacultyDashboard() {
                     {user?.features?.auto_attendance && (
                         <ActionCard path="/faculty/smart-attendance" icon="📸" title="Scan Student QR" />
                     )}
+                    <ActionCard path="/faculty/scan-attendance" icon="🤳" title="My QRCode" />
                     <ActionCard path="/faculty/marks" icon="📝" title="Enter Marks" />
+                    <ActionCard path="/faculty/timetable" icon="📅" title="My Schedule" />
                     {user?.features?.announcements && (
                         <ActionCard path="/faculty/announcements" icon="📢" title="My Announcements" />
                     )}
