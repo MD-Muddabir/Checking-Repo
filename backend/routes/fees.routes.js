@@ -19,4 +19,8 @@ router.post("/pay", verifyToken, allowRoles("admin", "student", "manager"), chec
 router.get("/payments", verifyToken, allowRoles("admin", "manager"), checkManagerPermission("fees.read"), checkFeatureAccess("feature_fees"), feesController.getAllPayments);
 router.get("/payment/:student_id", verifyToken, allowRoles("admin", "faculty", "student", "manager"), checkManagerPermission("fees.read"), checkFeatureAccess("feature_fees"), feesController.getStudentPayments);
 
+router.get("/student-fees", verifyToken, allowRoles("admin", "manager"), checkManagerPermission("fees.read"), checkFeatureAccess("feature_fees"), feesController.getAssignedStudentFees);
+router.post("/discount", verifyToken, allowRoles("admin", "manager"), checkManagerPermission("fees.update"), checkFeatureAccess("feature_fees"), feesController.applyDiscount);
+router.get("/discount-logs", verifyToken, allowRoles("admin", "manager"), checkManagerPermission("fees.read"), checkFeatureAccess("feature_fees"), feesController.getDiscountLogs);
+
 module.exports = router;

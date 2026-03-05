@@ -1,4 +1,4 @@
-const { Student, Faculty, Class, User } = require("../models");
+const { Student, Faculty, Class, User, StudentFee } = require("../models");
 
 exports.getDashboardStats = async (req, res) => {
     try {
@@ -38,6 +38,11 @@ exports.getDashboardStats = async (req, res) => {
             where: { institute_id }
         });
 
+        // Fees metrics
+        const studentFees = await StudentFee.findAll({ where: { institute_id } });
+        const totalDiscount = studentFees.reduce((sum, sf) => sum + parseFloat(sf.discount_amount || 0), 0);
+        const totalDue = studentFees.reduce((sum, sf) => sum + parseFloat(sf.due_amount || 0), 0);
+
         res.status(200).json({
             success: true,
             data: {
@@ -45,7 +50,9 @@ exports.getDashboardStats = async (req, res) => {
                 totalFaculty,
                 totalClasses,
                 totalAdmins,
-                activeStudents
+                activeStudents,
+                totalDiscount,
+                totalDue
             }
         });
 

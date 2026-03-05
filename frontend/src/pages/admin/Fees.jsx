@@ -29,8 +29,9 @@ function Fees() {
     const [tab, setTab] = useState('collect');
 
     // Data
-    const [students, setStudents] = useState([]);
+    const [studentFees, setStudentFees] = useState([]);
     const [payments, setPayments] = useState([]);
+    const [discountLogs, setDiscountLogs] = useState([]);
     const [feeStructures, setFeeStructures] = useState([]);
     const [classes, setClasses] = useState([]);
     const [subjects, setSubjects] = useState([]);
@@ -39,7 +40,7 @@ function Fees() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [filterClass, setFilterClass] = useState('');
-    const [filterStatus, setFilterStatus] = useState('pending'); // 'pending' | 'paid' | 'all'
+    const [filterStatus, setFilterStatus] = useState('all'); // 'pending' | 'paid' | 'all'
     const [success, setSuccess] = useState('');
 
     // Collect fee modal
@@ -62,19 +63,25 @@ function Fees() {
         class_id: '', subject_id: '', fee_type: 'Tuition Fee', amount: '', due_date: '', description: ''
     });
 
+    // Discount modal
+    const [discountingFee, setDiscountingFee] = useState(null);
+    const [discountForm, setDiscountForm] = useState({ percentage: '', amount: '', reason: '' });
+
     useEffect(() => { init(); }, []);
 
     const init = async () => {
         try {
             setLoading(true);
-            const [sRes, cRes, pRes] = await Promise.all([
-                api.get('/students'),
+            const [sfRes, cRes, pRes, dRes] = await Promise.all([
+                api.get('/fees/student-fees'),
                 api.get('/classes'),
                 api.get('/fees/payments'),
+                api.get('/fees/discount-logs')
             ]);
-            setStudents(sRes.data.data || []);
+            setStudentFees(sfRes.data.data || []);
             setClasses(cRes.data.data || []);
             setPayments(pRes.data.data || []);
+            setDiscountLogs(dRes.data.data || []);
             if (isAdmin || hasPerm('fees', 'read')) {
                 const fRes = await api.get('/fees/structure');
                 setFeeStructures(fRes.data.data || []);
@@ -87,30 +94,37 @@ function Fees() {
     };
 
     const refreshPayments = async () => {
-        const pRes = await api.get('/fees/payments');
+        const [sfRes, pRes] = await Promise.all([
+            api.get('/fees/student-fees'),
+            api.get('/fees/payments'),
+        ]);
+        setStudentFees(sfRes.data.data || []);
         setPayments(pRes.data.data || []);
     };
 
-    // ── Derived: which students have paid? ──
-    const paidStudentIds = new Set(payments.filter(p => p.status === 'success').map(p => p.student_id));
-
-    const filteredStudents = students.filter(s => {
-        const name = s.User?.name?.toLowerCase() || '';
-        const roll = s.roll_number?.toLowerCase() || '';
+    const filteredFees = studentFees.filter(sf => {
+        const name = sf.Student?.User?.name?.toLowerCase() || '';
+        const roll = sf.Student?.roll_number?.toLowerCase() || '';
         const matchSearch = !search || name.includes(search.toLowerCase()) || roll.includes(search.toLowerCase());
-        const matchClass = !filterClass || String(s.class_id) === String(filterClass);
-        const isPaid = paidStudentIds.has(s.id);
-        const matchStatus =
-            filterStatus === 'all' ? true :
-                filterStatus === 'paid' ? isPaid :
-                    !isPaid; // pending
+        const matchClass = !filterClass || String(sf.class_id) === String(filterClass);
+        const matchStatus = filterStatus === 'all' ? true : sf.status === filterStatus;
         return matchSearch && matchClass && matchStatus;
     });
 
-    // Open collect modal pre-filled with student info
-    const openCollect = (student) => {
-        setCollectingStudent(student);
-        setPayForm({ amount: '', payment_method: 'cash', transaction_id: '', payment_date: TODAY, remarks: '' });
+    // Open collect modal pre-filled
+    const openCollect = (stuFee) => {
+        setCollectingStudent(stuFee);
+        setPayForm({ amount: stuFee.due_amount, payment_method: 'cash', transaction_id: '', payment_date: TODAY, remarks: '' });
+        setPayError('');
+    };
+
+    const openDiscount = (stuFee) => {
+        if (String(stuFee.id).startsWith('dummy_')) {
+            alert("No configured class fee exists for this student.");
+            return;
+        }
+        setDiscountingFee(stuFee);
+        setDiscountForm({ percentage: '', amount: '', reason: '' });
         setPayError('');
     };
 
@@ -123,7 +137,8 @@ function Fees() {
         try {
             setCollecting(true);
             await api.post('/fees/pay', {
-                student_id: collectingStudent.id,
+                student_id: collectingStudent.student_id,
+                fee_structure_id: collectingStudent.fee_structure_id,
                 amount: payForm.amount,
                 payment_method: payForm.payment_method,
                 transaction_id: payForm.transaction_id,
@@ -131,13 +146,34 @@ function Fees() {
                 remarks: payForm.remarks
             });
             setCollectingStudent(null);
-            setSuccess(`✅ Payment of ₹${parseFloat(payForm.amount).toLocaleString()} collected from ${collectingStudent.User?.name}`);
+            setSuccess(`✅ Payment of ₹${parseFloat(payForm.amount).toLocaleString()} collected successfully`);
             setTimeout(() => setSuccess(''), 5000);
             await refreshPayments();
         } catch (err) {
             setPayError(err.response?.data?.message || 'Failed to record payment.');
         } finally {
             setCollecting(false);
+        }
+    };
+
+    const handleDiscount = async (e) => {
+        e.preventDefault();
+        const conf = window.confirm(`Are you sure you want to give a discount of ₹${discountForm.amount}?`);
+        if (!conf) return;
+        try {
+            await api.post('/fees/discount', {
+                student_fee_id: discountingFee.id,
+                discount_amount: discountForm.amount,
+                reason: discountForm.reason
+            });
+            setDiscountingFee(null);
+            setSuccess(`🎉 Discount applied successfully`);
+            setTimeout(() => setSuccess(''), 5000);
+            const [sfRes, dRes] = await Promise.all([api.get('/fees/student-fees'), api.get('/fees/discount-logs')]);
+            setStudentFees(sfRes.data.data || []);
+            setDiscountLogs(dRes.data.data || []);
+        } catch (err) {
+            alert(err.response?.data?.message || 'Error applying discount');
         }
     };
 
@@ -205,9 +241,12 @@ function Fees() {
         ...(isAdmin || hasPerm('fees', 'read') ? [{ id: 'structure', label: '📐 Fee Structures', icon: '📐' }] : []),
     ];
 
-    const pendingCount = students.filter(s => !paidStudentIds.has(s.id)).length;
-    const paidCount = students.filter(s => paidStudentIds.has(s.id)).length;
-    const totalCollected = payments.filter(p => p.status === 'success').reduce((sum, p) => sum + parseFloat(p.amount_paid || 0), 0);
+    const pendingCount = studentFees.filter(sf => sf.status === 'pending').length;
+    const partialCount = studentFees.filter(sf => sf.status === 'partial').length;
+    const paidCount = studentFees.filter(sf => sf.status === 'paid').length;
+    const totalCollected = studentFees.reduce((sum, sf) => sum + parseFloat(sf.paid_amount || 0), 0);
+    const totalDue = studentFees.reduce((sum, sf) => sum + parseFloat(sf.due_amount || 0), 0);
+    const totalDiscount = studentFees.reduce((sum, sf) => sum + parseFloat(sf.discount_amount || 0), 0);
 
     return (
         <div className="dashboard-container">
@@ -246,26 +285,40 @@ function Fees() {
             )}
 
             {/* Summary stats */}
-            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)', marginBottom: '1.5rem' }}>
+            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(5,1fr)', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                 <div className="stat-card">
                     <div className="stat-icon">⏳</div>
                     <div className="stat-content">
-                        <h3 style={{ color: '#f59e0b' }}>{pendingCount}</h3>
-                        <p>Pending Students</p>
+                        <h3 style={{ color: '#f59e0b' }}>{pendingCount + partialCount}</h3>
+                        <p>Pending / Partial</p>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon">✅</div>
                     <div className="stat-content">
                         <h3 style={{ color: '#10b981' }}>{paidCount}</h3>
-                        <p>Paid Students</p>
+                        <p>Fully Paid</p>
                     </div>
                 </div>
                 <div className="stat-card">
                     <div className="stat-icon">💵</div>
                     <div className="stat-content">
-                        <h3>₹{totalCollected.toLocaleString()}</h3>
+                        <h3 style={{ color: '#6366f1' }}>₹{totalCollected.toLocaleString()}</h3>
                         <p>Total Collected</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon">🔔</div>
+                    <div className="stat-content">
+                        <h3 style={{ color: '#ef4444' }}>₹{totalDue.toLocaleString()}</h3>
+                        <p>Total Dues</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon">🎉</div>
+                    <div className="stat-content">
+                        <h3 style={{ color: '#a855f7' }}>₹{totalDiscount.toLocaleString()}</h3>
+                        <p>Total Discount Given</p>
                     </div>
                 </div>
             </div>
@@ -301,7 +354,7 @@ function Fees() {
                             {classes.map(c => <option key={c.id} value={c.id}>{c.name} {c.section}</option>)}
                         </select>
                         <div style={{ display: 'flex', gap: '4px' }}>
-                            {[['pending', '⏳ Pending', '#f59e0b'], ['paid', '✅ Paid', '#10b981'], ['all', '👥 All', '#6366f1']].map(([val, lbl, col]) => (
+                            {[['pending', '⏳ Pending', '#ef4444'], ['partial', '⚠️ Partial', '#f59e0b'], ['paid', '✅ Paid', '#10b981'], ['all', '👥 All', '#6366f1']].map(([val, lbl, col]) => (
                                 <button key={val} onClick={() => setFilterStatus(val)} style={{
                                     padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
                                     fontWeight: filterStatus === val ? '700' : '500', fontSize: '0.85rem',
@@ -314,109 +367,98 @@ function Fees() {
                     </div>
 
                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-                        Showing <strong>{filteredStudents.length}</strong> student{filteredStudents.length !== 1 ? 's' : ''}
+                        Showing <strong>{filteredFees.length}</strong> fee record{filteredFees.length !== 1 ? 's' : ''}
                     </div>
 
-                    {/* Student rows */}
-                    {filteredStudents.length === 0 ? (
+                    {/* Student fee rows */}
+                    {filteredFees.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                             <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>
                                 {filterStatus === 'pending' ? '🎉' : '📭'}
                             </div>
                             <div style={{ fontWeight: '600' }}>
-                                {filterStatus === 'pending' ? 'All students have paid!' : 'No students match your search.'}
+                                {filterStatus === 'pending' ? 'All fees paid!' : 'No records match.'}
                             </div>
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            {filteredStudents.map(s => {
-                                const isPaid = paidStudentIds.has(s.id);
-                                // find latest payment for this student
-                                const latestPay = payments.filter(p => p.student_id === s.id && p.status === 'success').sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date))[0];
-                                const cls = classes.find(c => c.id === s.class_id);
+                            {filteredFees.map(sf => {
+                                const stColor = sf.status === 'paid' ? '#10b981' : sf.status === 'partial' ? '#f59e0b' : '#ef4444';
+                                const stBg = sf.status === 'paid' ? 'rgba(16,185,129,0.08)' : sf.status === 'partial' ? 'rgba(245,158,11,0.06)' : 'rgba(239,68,68,0.06)';
+
                                 return (
-                                    <div key={s.id} style={{
+                                    <div key={sf.id} style={{
                                         display: 'flex', alignItems: 'center', gap: '1rem',
                                         padding: '0.85rem 1.1rem', borderRadius: '12px',
-                                        border: `1px solid ${isPaid ? 'rgba(16,185,129,0.25)' : 'rgba(245,158,11,0.25)'}`,
-                                        background: isPaid ? 'rgba(16,185,129,0.04)' : 'rgba(245,158,11,0.04)',
-                                        transition: 'box-shadow 0.2s',
+                                        border: `1px solid ${sf.status === 'paid' ? 'rgba(16,185,129,0.3)' : sf.status === 'partial' ? 'rgba(245,158,11,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                                        background: stBg, transition: 'box-shadow 0.2s',
                                         flexWrap: 'wrap'
                                     }}>
                                         {/* Avatar */}
                                         <div style={{
                                             width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0,
-                                            background: isPaid
-                                                ? 'linear-gradient(135deg,#10b981,#059669)'
-                                                : 'linear-gradient(135deg,#f59e0b,#d97706)',
+                                            background: sf.status === 'paid' ? 'linear-gradient(135deg,#10b981,#059669)' : sf.status === 'partial' ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'linear-gradient(135deg,#ef4444,#b91c1c)',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                                             color: '#fff', fontWeight: '700', fontSize: '1rem'
                                         }}>
-                                            {(s.User?.name || 'S')[0].toUpperCase()}
+                                            {(sf.Student?.User?.name || 'S')[0].toUpperCase()}
                                         </div>
 
                                         {/* Info */}
-                                        <div style={{ flex: 1, minWidth: '140px' }}>
-                                            <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>{s.User?.name}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                Roll: {s.roll_number} · {cls ? `${cls.name} ${cls.section || ''}` : 'N/A'}
+                                        <div style={{ flex: 1, minWidth: '160px' }}>
+                                            <div style={{ fontWeight: '700', fontSize: '0.95rem' }}>{sf.Student?.User?.name} ({sf.Student?.roll_number})</div>
+                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                                <span className="badge badge-secondary">{sf.Class?.name} {sf.Class?.section}</span>
+                                                <span className="badge badge-info">{sf.FeesStructure?.fee_type || 'Fee'}</span>
                                             </div>
                                         </div>
 
-                                        {/* Payment info */}
-                                        <div style={{ textAlign: 'right', minWidth: '130px' }}>
-                                            {isPaid && latestPay ? (
-                                                <>
-                                                    <div style={{ fontWeight: '700', color: '#10b981', fontSize: '0.95rem' }}>
-                                                        ₹{parseFloat(latestPay.amount_paid).toLocaleString()}
-                                                    </div>
-                                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                                                        {new Date(latestPay.payment_date).toLocaleDateString()} · {latestPay.payment_method}
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: '600' }}>
-                                                    Fees Pending
-                                                </div>
-                                            )}
+                                        {/* Financials details breakdown */}
+                                        <div style={{ minWidth: '220px', display: 'flex', gap: '15px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                            <div>
+                                                <div>Original: ₹{parseFloat(sf.original_amount).toLocaleString()}</div>
+                                                <div style={{ color: '#a855f7' }}>Disc: ₹{parseFloat(sf.discount_amount).toLocaleString()}</div>
+                                                <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>Final: ₹{parseFloat(sf.final_amount).toLocaleString()}</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ color: '#10b981' }}>Paid: ₹{parseFloat(sf.paid_amount).toLocaleString()}</div>
+                                                <div style={{ color: '#ef4444', fontWeight: '700' }}>Due: ₹{parseFloat(sf.due_amount).toLocaleString()}</div>
+                                            </div>
                                         </div>
 
-                                        {/* Status badge + Action */}
+                                        {/* Action buttons */}
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                                             <span style={{
                                                 fontSize: '0.74rem', padding: '3px 10px', borderRadius: '20px', fontWeight: '700',
-                                                background: isPaid ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                                                color: isPaid ? '#10b981' : '#f59e0b'
+                                                background: sf.status === 'paid' ? 'rgba(16,185,129,0.15)' : sf.status === 'partial' ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)',
+                                                color: stColor
                                             }}>
-                                                {isPaid ? '✅ Paid' : '⏳ Pending'}
+                                                {sf.status.toUpperCase()}
                                             </span>
 
-                                            {!isPaid && hasPerm('fees', 'create') && (
-                                                <button
-                                                    onClick={() => openCollect(s)}
-                                                    style={{
-                                                        padding: '6px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                                                        background: 'linear-gradient(135deg,#10b981,#059669)',
-                                                        color: '#fff', fontWeight: '700', fontSize: '0.82rem',
-                                                        boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
-                                                        transition: 'transform 0.15s'
-                                                    }}
-                                                    onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
-                                                    onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
-                                                >
-                                                    💵 Collect
-                                                </button>
-                                            )}
-                                            {isPaid && hasPerm('fees', 'create') && (
-                                                <button
-                                                    onClick={() => openCollect(s)}
-                                                    style={{
-                                                        padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.35)',
-                                                        background: 'transparent', color: '#10b981', fontWeight: '600', fontSize: '0.8rem', cursor: 'pointer'
-                                                    }}
-                                                >
-                                                    + Add More
-                                                </button>
+                                            {sf.status !== 'paid' && hasPerm('fees', 'create') && (
+                                                <>
+                                                    <button
+                                                        onClick={() => openDiscount(sf)}
+                                                        style={{
+                                                            padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.4)',
+                                                            background: 'rgba(168, 85, 247, 0.05)', color: '#a855f7', fontWeight: '600', fontSize: '0.8rem', cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        🎉 Discount
+                                                    </button>
+                                                    <button
+                                                        onClick={() => openCollect(sf)}
+                                                        style={{
+                                                            padding: '6px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+                                                            background: 'linear-gradient(135deg,#10b981,#059669)',
+                                                            color: '#fff', fontWeight: '700', fontSize: '0.82rem',
+                                                            boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+                                                        }}
+                                                    >
+                                                        💵 Collect
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -429,58 +471,65 @@ function Fees() {
 
             {/* ═══ PAYMENT HISTORY TAB ═══ */}
             {tab === 'history' && (
-                <div className="card">
-                    <div style={{ marginBottom: '1rem' }}>
-                        <input type="text" className="form-input" placeholder="🔍 Search student name..."
-                            value={search} onChange={e => setSearch(e.target.value)}
-                            style={{ maxWidth: '320px' }} />
-                    </div>
-                    <div className="table-container">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Student</th>
-                                    <th>Amount</th>
-                                    <th>Method</th>
-                                    <th>Transaction ID</th>
-                                    <th>Remarks</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {payments.filter(p => {
-                                    const n = (p.Student?.User?.name || '').toLowerCase();
-                                    return !search || n.includes(search.toLowerCase());
-                                }).length === 0 ? (
-                                    <tr><td colSpan="7" className="text-center">No payment records found</td></tr>
-                                ) : (
-                                    payments.filter(p => {
-                                        const n = (p.Student?.User?.name || '').toLowerCase();
-                                        return !search || n.includes(search.toLowerCase());
-                                    }).map(p => (
+                <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
+                    <div className="card">
+                        <h3 style={{ marginBottom: '1rem' }}>💵 Payment Logs</h3>
+                        <div className="table-container" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Student</th>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {payments.length === 0 ? (
+                                        <tr><td colSpan="5" className="text-center">No payment records found</td></tr>
+                                    ) : payments.map(p => (
                                         <tr key={p.id}>
                                             <td>{new Date(p.payment_date).toLocaleDateString()}</td>
-                                            <td>
-                                                <strong>{p.Student?.User?.name}</strong><br />
-                                                <small>{p.Student?.roll_number}</small>
-                                            </td>
-                                            <td style={{ color: '#10b981', fontWeight: '700' }}>
-                                                +₹{parseFloat(p.amount_paid).toLocaleString()}
-                                            </td>
+                                            <td>{p.Student?.User?.name} <small>({p.Student?.roll_number})</small></td>
+                                            <td style={{ color: '#10b981', fontWeight: '700' }}>+₹{parseFloat(p.amount_paid).toLocaleString()}</td>
                                             <td style={{ textTransform: 'capitalize' }}>{p.payment_method}</td>
-                                            <td>{p.transaction_id || '—'}</td>
-                                            <td>{p.remarks || '—'}</td>
+                                            <td><span className={`badge badge-${p.status === 'success' ? 'success' : 'warning'}`}>{p.status}</span></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <h3 style={{ marginBottom: '1rem' }}>🎉 Discount Logs</h3>
+                        <div className="table-container" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Student</th>
+                                        <th>Discount</th>
+                                        <th>Reason/Approver</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {discountLogs.length === 0 ? (
+                                        <tr><td colSpan="4" className="text-center">No discounts issued</td></tr>
+                                    ) : discountLogs.map(dl => (
+                                        <tr key={dl.id}>
+                                            <td>{new Date(dl.createdAt).toLocaleDateString()}</td>
+                                            <td>{dl.StudentFee?.Student?.User?.name}</td>
+                                            <td style={{ color: '#a855f7', fontWeight: '700' }}>-₹{parseFloat(dl.discount_amount).toLocaleString()}</td>
                                             <td>
-                                                <span className={`badge badge-${p.status === 'success' ? 'success' : 'warning'}`}>
-                                                    {p.status}
-                                                </span>
+                                                <small><b>{dl.reason}</b><br />by {dl.approver?.name}</small>
                                             </td>
                                         </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}
@@ -548,12 +597,12 @@ function Fees() {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 color: '#fff', fontWeight: '800', fontSize: '1.2rem', flexShrink: 0
                             }}>
-                                {(collectingStudent.User?.name || 'S')[0].toUpperCase()}
+                                {(collectingStudent.Student?.User?.name || 'S')[0].toUpperCase()}
                             </div>
                             <div>
                                 <h2 style={{ margin: 0 }}>Collect Fee</h2>
                                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                    {collectingStudent.User?.name} · Roll {collectingStudent.roll_number}
+                                    {collectingStudent.Student?.User?.name} · Roll {collectingStudent.Student?.roll_number}
                                 </div>
                             </div>
                         </div>
@@ -564,7 +613,7 @@ function Fees() {
                                     <label className="form-label">Amount (₹) *</label>
                                     <input
                                         type="number" className="form-input" placeholder="e.g. 5000"
-                                        value={payForm.amount} min="1" step="1" required
+                                        value={payForm.amount} min="1" step="0.01" required
                                         onChange={e => setPayForm({ ...payForm, amount: e.target.value })}
                                         autoFocus
                                         style={{ fontWeight: '700', fontSize: '1.1rem' }}
@@ -621,19 +670,17 @@ function Fees() {
                             )}
 
                             {/* Amount preview */}
-                            {payForm.amount && (
-                                <div style={{
-                                    background: 'linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.05))',
-                                    border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px',
-                                    padding: '0.75rem 1rem', marginBottom: '1rem',
-                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                                }}>
-                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Collecting from {collectingStudent.User?.name}</span>
-                                    <span style={{ fontWeight: '800', color: '#10b981', fontSize: '1.3rem' }}>
-                                        ₹{parseFloat(payForm.amount).toLocaleString()}
-                                    </span>
-                                </div>
-                            )}
+                            <div style={{
+                                background: 'linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.05))',
+                                border: '1px solid rgba(16,185,129,0.3)', borderRadius: '10px',
+                                padding: '0.75rem 1rem', marginBottom: '1rem',
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                            }}>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Paying {collectingStudent.Student?.User?.name} Due:</span>
+                                <span style={{ fontWeight: '800', color: '#10b981', fontSize: '1.3rem' }}>
+                                    ₹{parseFloat(collectingStudent.due_amount).toLocaleString()}
+                                </span>
+                            </div>
 
                             <div className="modal-actions">
                                 <button type="button" className="btn btn-secondary"
@@ -646,6 +693,62 @@ function Fees() {
                                     color: '#fff', fontWeight: '700', fontSize: '0.95rem', cursor: 'pointer'
                                 }}>
                                     {collecting ? 'Processing…' : '✅ Confirm Collection'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ═══ DISCOUNT MODAL ═══ */}
+            {discountingFee && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '400px', width: '95%' }}>
+                        <h2 style={{ marginBottom: '1.25rem' }}>🎉 Give Discount</h2>
+                        <div style={{ color: 'var(--text-secondary)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                            Student: <strong>{discountingFee.Student?.User?.name}</strong><br />
+                            Original Fee: <b>₹{parseFloat(discountingFee.original_amount).toLocaleString()}</b>
+                        </div>
+                        <form onSubmit={handleDiscount}>
+                            <div className="form-group">
+                                <label className="form-label">Discount Percentage (%)</label>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <input type="number" className="form-input" min="0" max="100" step="0.01"
+                                        value={discountForm.percentage}
+                                        onChange={e => {
+                                            const pct = e.target.value;
+                                            const orig = parseFloat(discountingFee.original_amount) || 0;
+                                            const amt = pct ? ((orig * parseFloat(pct)) / 100).toFixed(2) : '';
+                                            setDiscountForm({ ...discountForm, percentage: pct, amount: amt });
+                                        }} autoFocus />
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Discount Amount (₹)</label>
+                                <input type="number" className="form-input" required min="1" max={discountingFee.due_amount}
+                                    value={discountForm.amount}
+                                    onChange={e => {
+                                        const amt = e.target.value;
+                                        const orig = parseFloat(discountingFee.original_amount) || 0;
+                                        const pct = (orig > 0 && amt) ? ((parseFloat(amt) / orig) * 100).toFixed(2) : '';
+                                        setDiscountForm({ ...discountForm, amount: amt, percentage: pct });
+                                    }} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Reason</label>
+                                <select className="form-select" required value={discountForm.reason} onChange={e => setDiscountForm({ ...discountForm, reason: e.target.value })}>
+                                    <option value="">Select Reason...</option>
+                                    <option>Scholarship</option>
+                                    <option>Special Case</option>
+                                    <option>Manual Adjustment</option>
+                                    <option>Sibling Discount</option>
+                                </select>
+                            </div>
+                            <div className="modal-actions">
+                                <button type="button" className="btn btn-secondary" onClick={() => setDiscountingFee(null)}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#a855f7,#7c3aed)', border: 'none' }}>
+                                    Apply Discount
                                 </button>
                             </div>
                         </form>

@@ -23,6 +23,8 @@ function AdminDashboard() {
         totalClasses: 0,
         activeStudents: 0,
         totalAdmins: 0,
+        totalDiscount: 0,
+        totalDue: 0,
     });
 
     const [planDetails, setPlanDetails] = useState(null);
@@ -236,7 +238,7 @@ function AdminDashboard() {
                     </div>
                 </div>
             ) : (
-                <div className="stats-grid">
+                <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
                     <div className="stat-card">
                         <div className="stat-icon">👥</div>
                         <div className="stat-content">
@@ -270,6 +272,20 @@ function AdminDashboard() {
                         <div className="stat-content">
                             <h3>{stats.activeStudents}</h3>
                             <p>Active Students</p>
+                        </div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-icon">🔔</div>
+                        <div className="stat-content">
+                            <h3>₹{(stats.totalDue || 0).toLocaleString()}</h3>
+                            <p>Total Due Fees</p>
+                        </div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-icon">🎉</div>
+                        <div className="stat-content">
+                            <h3>₹{(stats.totalDiscount || 0).toLocaleString()}</h3>
+                            <p>Total Discount Given</p>
                         </div>
                     </div>
                 </div>
