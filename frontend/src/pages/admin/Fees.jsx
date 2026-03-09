@@ -51,7 +51,8 @@ function Fees() {
         payment_method: 'cash',
         transaction_id: '',
         payment_date: TODAY,
-        remarks: ''
+        remarks: '',
+        reminder_date: ''
     });
     const [payError, setPayError] = useState('');
 
@@ -66,6 +67,11 @@ function Fees() {
     // Discount modal
     const [discountingFee, setDiscountingFee] = useState(null);
     const [discountForm, setDiscountForm] = useState({ percentage: '', amount: '', reason: '' });
+
+    // Reminder edit
+    const [editingReminderFee, setEditingReminderFee] = useState(null);
+    const [reminderDateInput, setReminderDateInput] = useState('');
+    const [updatingRem, setUpdatingRem] = useState(false);
 
     useEffect(() => { init(); }, []);
 
@@ -114,7 +120,14 @@ function Fees() {
     // Open collect modal pre-filled
     const openCollect = (stuFee) => {
         setCollectingStudent(stuFee);
-        setPayForm({ amount: stuFee.due_amount, payment_method: 'cash', transaction_id: '', payment_date: TODAY, remarks: '' });
+        setPayForm({
+            amount: stuFee.due_amount,
+            payment_method: 'cash',
+            transaction_id: '',
+            payment_date: TODAY,
+            remarks: '',
+            reminder_date: stuFee.reminder_date || ''
+        });
         setPayError('');
     };
 
@@ -143,7 +156,8 @@ function Fees() {
                 payment_method: payForm.payment_method,
                 transaction_id: payForm.transaction_id,
                 payment_date: payForm.payment_date,
-                remarks: payForm.remarks
+                remarks: payForm.remarks,
+                reminder_date: payForm.reminder_date
             });
             setCollectingStudent(null);
             setSuccess(`✅ Payment of ₹${parseFloat(payForm.amount).toLocaleString()} collected successfully`);
@@ -174,6 +188,25 @@ function Fees() {
             setDiscountLogs(dRes.data.data || []);
         } catch (err) {
             alert(err.response?.data?.message || 'Error applying discount');
+        }
+    };
+
+    const handleUpdateReminder = async (e) => {
+        e.preventDefault();
+        try {
+            setUpdatingRem(true);
+            await api.patch(`/fees/student-fee/${editingReminderFee.id}/reminder`, {
+                reminder_date: reminderDateInput
+            });
+            setEditingReminderFee(null);
+            setSuccess(`📅 Reminder date updated successfully`);
+            setTimeout(() => setSuccess(''), 5000);
+            const sfRes = await api.get('/fees/student-fees');
+            setStudentFees(sfRes.data.data || []);
+        } catch (err) {
+            alert(err.response?.data?.message || 'Failed to update reminder date');
+        } finally {
+            setUpdatingRem(false);
         }
     };
 
@@ -257,6 +290,16 @@ function Fees() {
     };
     const overdueCount = studentFees.filter(isOverdue).length;
 
+    // Helper to check if a fee is within the reminder window (1 day before or more)
+    const isReminderActive = (sf) => {
+        if (!sf.reminder_date || sf.status === 'paid') return false;
+        const remDate = new Date(sf.reminder_date);
+        const today = new Date(todayDate);
+        // Start showing 1 day before (diff <= 1 day)
+        const diffDays = (remDate - today) / (1000 * 60 * 60 * 24);
+        return diffDays <= 1;
+    };
+
     return (
         <div className="dashboard-container">
             {/* Header */}
@@ -298,7 +341,7 @@ function Fees() {
                 <div style={{
                     background: 'linear-gradient(135deg,rgba(239,68,68,0.12),rgba(239,68,68,0.05))',
                     border: '1.5px solid rgba(239,68,68,0.5)', borderRadius: '12px',
-                    padding: '1rem 1.25rem', marginBottom: '1.25rem',
+                    padding: '1rem 1.25rem', marginBottom: '1rem',
                     display: 'flex', alignItems: 'center', gap: '1rem'
                 }}>
                     <span style={{ fontSize: '1.75rem' }}>🔔</span>
@@ -307,11 +350,33 @@ function Fees() {
                             {overdueCount} Overdue Fee{overdueCount !== 1 ? 's' : ''} Need Attention!
                         </div>
                         <div style={{ color: '#dc2626', fontSize: '0.85rem', marginTop: '0.2rem' }}>
-                            These students have outstanding dues past the due date. Consider notifying parents immediately.
+                            These students have outstanding dues past the due date.
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Phase: Reminder Alerts (New Feature) */}
+            {(() => {
+                const reminders = studentFees.filter(isReminderActive);
+                if (reminders.length === 0) return null;
+                return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                        {reminders.map(rem => (
+                            <div key={`rem-${rem.id}`} style={{
+                                background: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(245,158,11,0.05))',
+                                border: '1.5px solid rgba(245,158,11,0.5)', borderRadius: '12px',
+                                padding: '0.85rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem'
+                            }}>
+                                <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                                <div style={{ color: '#d97706', fontWeight: '600', fontSize: '0.95rem' }}>
+                                    {rem.Student?.User?.name} and This student Fees Pending. (Reminder Date: {new Date(rem.reminder_date).toLocaleDateString()})
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                );
+            })()}
 
             {/* Summary stats */}
             <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(5,1fr)', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
@@ -456,6 +521,26 @@ function Fees() {
                                                     <span style={{ color: isOverdue(sf) ? '#ef4444' : 'var(--text-muted)', fontWeight: isOverdue(sf) ? 700 : 400 }}>
                                                         Due: {new Date(sf.FeesStructure.due_date).toLocaleDateString()}
                                                     </span>
+                                                )}
+                                                {sf.reminder_date && sf.status !== 'paid' && (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span style={{ color: isReminderActive(sf) && sf.reminder_date <= todayDate ? '#ef4444' : '#f59e0b', fontWeight: 700 }}>
+                                                            🔔 Reminder: {new Date(sf.reminder_date).toLocaleDateString()}
+                                                        </span>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingReminderFee(sf);
+                                                                setReminderDateInput(sf.reminder_date || '');
+                                                            }}
+                                                            style={{
+                                                                padding: '2px 8px', borderRadius: '4px', border: '1px solid #f59e0b',
+                                                                background: 'rgba(245,158,11,0.1)', color: '#f59e0b', fontSize: '0.7rem',
+                                                                cursor: 'pointer', fontWeight: 'bold'
+                                                            }}
+                                                        >
+                                                            📝 Edit
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -703,11 +788,20 @@ function Fees() {
                                 </div>
                             )}
 
-                            <div className="form-group">
-                                <label className="form-label">Remarks (Optional)</label>
-                                <input type="text" className="form-input"
-                                    value={payForm.remarks} placeholder="e.g. Q1 tuition fee"
-                                    onChange={e => setPayForm({ ...payForm, remarks: e.target.value })} />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label className="form-label">Remarks (Optional)</label>
+                                    <input type="text" className="form-input"
+                                        value={payForm.remarks} placeholder="e.g. Q1 tuition fee"
+                                        onChange={e => setPayForm({ ...payForm, remarks: e.target.value })} />
+                                </div>
+                                <div className="form-group" style={{ margin: 0 }}>
+                                    <label className="form-label" style={{ color: '#f59e0b' }}>🔔 Reminder Date</label>
+                                    <input type="date" className="form-input"
+                                        value={payForm.reminder_date}
+                                        onChange={e => setPayForm({ ...payForm, reminder_date: e.target.value })}
+                                        style={{ border: '1.5px solid rgba(245,158,11,0.3)' }} />
+                                </div>
                             </div>
 
                             {payError && (
@@ -890,6 +984,52 @@ function Fees() {
                                 <button type="button" className="btn btn-secondary" onClick={() => setShowStructureModal(false)}>Cancel</button>
                                 <button type="submit" className="btn btn-primary" style={{ background: 'linear-gradient(135deg,#6366f1,#a855f7)', border: 'none' }}>
                                     {editingStructureId ? 'Save Changes' : 'Create Structure'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* ═══ EDIT REMINDER MODAL ═══ */}
+            {editingReminderFee && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '400px', width: '95%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+                            <div style={{
+                                width: '48px', height: '48px', borderRadius: '50%',
+                                background: 'linear-gradient(135deg,#f59e0b,#d97706)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: '#fff', fontSize: '1.2rem', flexShrink: 0
+                            }}>
+                                🔔
+                            </div>
+                            <div>
+                                <h3 style={{ margin: 0 }}>Update Reminder Date</h3>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                    {editingReminderFee.Student?.User?.name}
+                                </div>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleUpdateReminder}>
+                            <div className="form-group">
+                                <label className="form-label">New Reminder Date</label>
+                                <input
+                                    type="date" className="form-input" required
+                                    value={reminderDateInput}
+                                    onChange={e => setReminderDateInput(e.target.value)}
+                                />
+                                <small style={{ color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                                    This date will be used to alert the parent and admin.
+                                </small>
+                            </div>
+
+                            <div className="modal-actions" style={{ marginTop: '1.5rem' }}>
+                                <button type="button" className="btn btn-secondary" onClick={() => setEditingReminderFee(null)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={updatingRem} className="btn btn-primary" style={{ background: '#f59e0b', border: 'none' }}>
+                                    {updatingRem ? 'Updating...' : '💾 Save Changes'}
                                 </button>
                             </div>
                         </form>

@@ -11,6 +11,7 @@ function StudentDashboard() {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const [unreadCount, setUnreadCount] = useState(0);
+    const [chatUnreadCount, setChatUnreadCount] = useState(0);
 
     useEffect(() => {
         if (user?.features?.announcements) {
@@ -20,6 +21,14 @@ function StudentDashboard() {
                 }
             }).catch(err => console.log(err));
         }
+
+        // Fetch chat unread count
+        api.get('/chat/unread-count').then(res => {
+            if (res.data.success) {
+                setChatUnreadCount(res.data.count);
+            }
+        }).catch(err => console.log(err));
+
     }, [user]);
 
     const ActionCard = ({ icon, title, path, badge }) => (
@@ -71,7 +80,7 @@ function StudentDashboard() {
                     )}
 
                     <ActionCard path="/student/notes" icon="📚" title="My Notes" />
-                    <ActionCard path="/student/chat" icon="💬" title="Subject Chat" />
+                    <ActionCard path="/student/chat" icon="💬" title="Subject Chat" badge={chatUnreadCount} />
 
                     <ActionCard path="/student/profile" icon="👤" title="My Profile" />
                 </div>

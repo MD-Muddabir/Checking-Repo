@@ -23,6 +23,9 @@ router.post(
 // Get chat rooms
 router.get("/rooms", authMiddleware, chatController.getRooms);
 
+// Get total unread count
+router.get("/unread-count", authMiddleware, chatController.getUnreadChatCount);
+
 // Get messages in a specific room
 router.get("/room/:roomId", authMiddleware, chatController.getRoomMessages);
 
@@ -34,6 +37,9 @@ router.post("/room/get-or-create", authMiddleware, chatController.getOrCreateRoo
 
 // Create a new room (Faculty Dashboard)
 router.post("/room/create", authMiddleware, chatController.createRoom);
+
+// Mark room as read
+router.post("/room/:roomId/read", authMiddleware, chatController.markAsRead);
 
 // Delete a room
 router.delete("/room/:roomId", authMiddleware, chatController.deleteRoom);

@@ -22,5 +22,6 @@ router.get("/payment/:student_id", verifyToken, allowRoles("admin", "faculty", "
 router.get("/student-fees", verifyToken, allowRoles("admin", "manager"), checkManagerPermission("fees.read"), checkFeatureAccess("feature_fees"), feesController.getAssignedStudentFees);
 router.post("/discount", verifyToken, allowRoles("admin", "manager"), checkManagerPermission("fees.update"), checkFeatureAccess("feature_fees"), feesController.applyDiscount);
 router.get("/discount-logs", verifyToken, allowRoles("admin", "manager"), checkManagerPermission("fees.read"), checkFeatureAccess("feature_fees"), feesController.getDiscountLogs);
+router.patch("/student-fee/:id/reminder", verifyToken, allowRoles("admin", "manager"), checkManagerPermission("fees.update"), checkFeatureAccess("feature_fees"), feesController.updateReminderDate);
 
 module.exports = router;

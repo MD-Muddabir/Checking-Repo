@@ -152,7 +152,7 @@ exports.getAllFeeStructures = async (req, res) => {
 
 exports.recordPayment = async (req, res) => {
     try {
-        const { student_id, fee_structure_id, amount, payment_method, transaction_id, payment_date, remarks } = req.body;
+        const { student_id, fee_structure_id, amount, payment_method, transaction_id, payment_date, remarks, reminder_date } = req.body;
         const institute_id = req.user.institute_id;
 
         let actual_student_id = student_id;
@@ -202,10 +202,10 @@ exports.recordPayment = async (req, res) => {
                 await stuFee.update({
                     paid_amount: newPaid,
                     due_amount: newDue > 0 ? newDue : 0,
-                    status: newDue <= 0 ? 'paid' : 'partial'
+                    status: newDue <= 0 ? 'paid' : 'partial',
+                    reminder_date: reminder_date || stuFee.reminder_date
                 });
-            } else if (!studentObj.subject_id) {
-                // Should not happen for class fees, but if so create it
+            } else if (studentObj) {
                 const fee = await FeesStructure.findOne({ where: { id: fee_structure_id } });
                 if (fee) {
                     const final = parseFloat(fee.amount);
@@ -220,7 +220,8 @@ exports.recordPayment = async (req, res) => {
                         final_amount: final,
                         paid_amount: amount,
                         due_amount: due > 0 ? due : 0,
-                        status: due <= 0 ? 'paid' : 'partial'
+                        status: due <= 0 ? 'paid' : 'partial',
+                        reminder_date: reminder_date || null
                     });
                 }
             }
@@ -555,6 +556,29 @@ exports.getDiscountLogs = async (req, res) => {
             order: [["id", "DESC"]]
         });
         res.status(200).json({ success: true, data: logs });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.updateReminderDate = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reminder_date } = req.body;
+        const institute_id = req.user.institute_id;
+
+        const stuFee = await StudentFee.findOne({ where: { id, institute_id } });
+        if (!stuFee) {
+            return res.status(404).json({ success: false, message: "Student fee record not found" });
+        }
+
+        await stuFee.update({ reminder_date });
+
+        res.status(200).json({
+            success: true,
+            message: "Reminder date updated successfully",
+            data: stuFee
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

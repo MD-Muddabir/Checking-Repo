@@ -293,10 +293,26 @@ exports.getMe = async (req, res) => {
             });
         }
 
+        let responseData = student.toJSON ? student.toJSON() : student;
+        if (responseData.is_full_course && responseData.Classes && responseData.Classes.length > 0) {
+            const classIds = responseData.Classes.map(c => c.id);
+            const allSubjects = await Subject.findAll({
+                where: { institute_id, class_id: { [Op.in]: classIds } },
+                attributes: ["id", "name"]
+            });
+
+            const existingSubIds = new Set((responseData.Subjects || []).map(s => s.id));
+            const newSubjects = allSubjects.filter(s => !existingSubIds.has(s.id)).map(s => s.toJSON ? s.toJSON() : s);
+
+            if (newSubjects.length > 0) {
+                responseData.Subjects = [...(responseData.Subjects || []), ...newSubjects];
+            }
+        }
+
         res.status(200).json({
             success: true,
             message: "Student retrieved successfully",
-            data: student,
+            data: responseData,
         });
     } catch (error) {
         res.status(500).json({
@@ -345,10 +361,26 @@ exports.getStudentById = async (req, res) => {
             });
         }
 
+        let responseData = student.toJSON ? student.toJSON() : student;
+        if (responseData.is_full_course && responseData.Classes && responseData.Classes.length > 0) {
+            const classIds = responseData.Classes.map(c => c.id);
+            const allSubjects = await Subject.findAll({
+                where: { institute_id, class_id: { [Op.in]: classIds } },
+                attributes: ["id", "name"]
+            });
+
+            const existingSubIds = new Set((responseData.Subjects || []).map(s => s.id));
+            const newSubjects = allSubjects.filter(s => !existingSubIds.has(s.id)).map(s => s.toJSON ? s.toJSON() : s);
+
+            if (newSubjects.length > 0) {
+                responseData.Subjects = [...(responseData.Subjects || []), ...newSubjects];
+            }
+        }
+
         res.status(200).json({
             success: true,
             message: "Student retrieved successfully",
-            data: student,
+            data: responseData,
         });
     } catch (error) {
         res.status(500).json({

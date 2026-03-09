@@ -1,4 +1,4 @@
-const { ChatRoom, ChatMessage, ChatParticipant, User, Faculty, Student, Class, Subject, StudentSubject } = require("../models");
+const { ChatRoom, ChatMessage, ChatParticipant, User, Faculty, Student, Class, Subject } = require("../models");
 const { Op } = require("sequelize");
 const fs = require("fs");
 
@@ -150,7 +150,7 @@ exports.sendMessage = async (req, res) => {
                 include: [{
                     model: Student,
                     as: "LinkedStudents",
-                    include: [{ model: UserModel, attributes: ["name"] }]
+                    include: [{ model: User, attributes: ["name"] }]
                 }]
             });
             if (parentUser && parentUser.LinkedStudents && parentUser.LinkedStudents.length > 0) {
@@ -180,18 +180,36 @@ exports.sendMessage = async (req, res) => {
 exports.getRooms = async (req, res) => {
     try {
         const { id: userId, role: userRole, institute_id } = req.user;
+        const { type, faculty_id, subject_id, class_id, parent_id } = req.query;
 
         async function enhanceAndSortRooms(roomsArray) {
             const result = [];
             for (const r of roomsArray) {
                 const rData = r.toJSON();
                 const msgCount = await ChatMessage.count({ where: { room_id: r.id } });
+
+                const participant = await ChatParticipant.findOne({ where: { room_id: r.id, user_id: userId } });
+                let unreadCount = 0;
+
+                if (participant && participant.last_read_at) {
+                    unreadCount = await ChatMessage.count({
+                        where: {
+                            room_id: r.id,
+                            created_at: { [Op.gt]: participant.last_read_at }
+                        }
+                    });
+                } else {
+                    // Not joined or first time seeing: all messages are unread
+                    unreadCount = msgCount;
+                }
+
                 const lastMsg = await ChatMessage.findOne({
                     where: { room_id: r.id },
                     order: [['created_at', 'DESC']],
                     attributes: ['created_at']
                 });
                 rData.message_count = msgCount;
+                rData.unread_count = unreadCount;
                 rData.last_message_at = lastMsg ? lastMsg.created_at : r.created_at;
                 result.push(rData);
             }
@@ -216,10 +234,27 @@ exports.getRooms = async (req, res) => {
             }
         ];
 
-        // ── Admin / Manager ── sees all rooms
+        // ── Admin / Manager ── sees all rooms with optional filtering
         if (userRole === "admin" || userRole === "owner" || userRole === "manager") {
+            const adminWhere = { institute_id };
+
+            if (type) adminWhere.type = type;
+            if (faculty_id) adminWhere.faculty_id = faculty_id;
+            if (subject_id) adminWhere.subject_id = subject_id;
+            if (class_id) adminWhere.class_id = class_id;
+
+            // Handle parent_id filter (special case: rooms where the parent is a participant)
+            if (parent_id) {
+                const parentParticipations = await ChatParticipant.findAll({
+                    where: { user_id: parent_id },
+                    attributes: ['room_id']
+                });
+                const pRoomIds = parentParticipations.map(p => p.room_id);
+                adminWhere.id = { [Op.in]: pRoomIds };
+            }
+
             const rooms = await ChatRoom.findAll({
-                where: { institute_id },
+                where: adminWhere,
                 include: roomInclude,
             });
             const enhancedRooms = await enhanceAndSortRooms(rooms);
@@ -344,6 +379,12 @@ exports.getRoomMessages = async (req, res) => {
             await ensureParticipant(roomId, userId, userRole);
         }
 
+        const participantToUpdate = await ChatParticipant.findOne({ where: { room_id: roomId, user_id: userId } });
+        if (participantToUpdate) {
+            participantToUpdate.last_read_at = new Date();
+            await participantToUpdate.save();
+        }
+
         let messages = await ChatMessage.findAll({
             where: { room_id: roomId },
             include: [{
@@ -376,7 +417,7 @@ exports.getRoomMessages = async (req, res) => {
                         include: [{
                             model: Student,
                             as: "LinkedStudents",
-                            include: [{ model: UserModel, attributes: ["name"] }]
+                            include: [{ model: User, attributes: ["name"] }]
                         }]
                     });
                     if (parentUser && parentUser.LinkedStudents && parentUser.LinkedStudents.length > 0) {
@@ -438,7 +479,7 @@ exports.getOrCreateRoom = async (req, res) => {
 exports.getRoomParticipants = async (req, res) => {
     try {
         const { roomId } = req.params;
-        const { institute_id } = req.user;
+        const { institute_id, role: userRole } = req.user;
 
         const room = await ChatRoom.findOne({ where: { id: roomId, institute_id } });
         if (!room) return res.status(404).json({ success: false, message: "Room not found" });
@@ -469,6 +510,57 @@ exports.getRoomParticipants = async (req, res) => {
         return res.status(200).json({ success: true, data: participants });
     } catch (err) {
         console.error("getRoomParticipants:", err);
+        return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// 8. Get Total Unread Chat Count
+exports.getUnreadChatCount = async (req, res) => {
+    try {
+        const { id: userId } = req.user;
+        let totalUnread = 0;
+
+        const participations = await ChatParticipant.findAll({
+            where: { user_id: userId },
+            attributes: ['room_id', 'last_read_at']
+        });
+
+        for (const p of participations) {
+            const count = await ChatMessage.count({
+                where: {
+                    room_id: p.room_id,
+                    created_at: { [Op.gt]: p.last_read_at || new Date(0) }
+                }
+            });
+            totalUnread += count;
+        }
+
+        return res.status(200).json({ success: true, count: totalUnread });
+    } catch (err) {
+        console.error('getUnreadChatCount:', err);
+        return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+exports.markAsRead = async (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const { id: userId, institute_id } = req.user;
+
+        const room = await ChatRoom.findOne({ where: { id: roomId, institute_id } });
+        if (!room) return res.status(404).json({ success: false, message: "Room not found" });
+
+        const [participant] = await ChatParticipant.findOrCreate({
+            where: { room_id: roomId, user_id: userId },
+            defaults: { role: req.user.role }
+        });
+
+        participant.last_read_at = new Date();
+        await participant.save();
+
+        return res.status(200).json({ success: true, message: "Room marked as read" });
+    } catch (err) {
+        console.error("markAsRead:", err);
         return res.status(500).json({ success: false, message: err.message });
     }
 };

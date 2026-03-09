@@ -68,6 +68,16 @@ function ParentDashboard() {
     // Attendance percentage
     const attPct = attendance?.summary?.attendance_percentage || 0;
 
+    const TODAY_STR = new Date().toISOString().split('T')[0];
+    const reminders = fees.filter(f => {
+        if (!f.reminder_date || f.status === 'paid') return false;
+        const remDate = new Date(f.reminder_date);
+        const today = new Date(TODAY_STR);
+        // Start showing 1 day before (diff <= 1 day)
+        const diffDays = (remDate - today) / (1000 * 60 * 60 * 24);
+        return diffDays <= 1;
+    });
+
     if (loading) {
         return (
             <div className="parent-dashboard-container" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
@@ -151,6 +161,23 @@ function ParentDashboard() {
                             {/* ═══ OVERVIEW TAB ═══ */}
                             {activeTab === 'overview' && (
                                 <>
+                                    {/* Reminder Alerts */}
+                                    {reminders.length > 0 && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                                            {reminders.map(rem => (
+                                                <div key={`rem-${rem.id}`} style={{
+                                                    background: 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(245,158,11,0.05))',
+                                                    border: '1.5px solid rgba(245,158,11,0.5)', borderRadius: '12px',
+                                                    padding: '0.85rem 1.25rem', display: 'flex', alignItems: 'center', gap: '1rem'
+                                                }}>
+                                                    <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                                                    <div style={{ color: '#d97706', fontWeight: '600', fontSize: '0.95rem' }}>
+                                                        {selectedStudent?.User?.name} and This student Fees Pending. (Reminder Date: {new Date(rem.reminder_date).toLocaleDateString()})
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                     <div className="stats-grid">
                                         {/* Attendance */}
                                         <div className="stat-card" style={{ borderLeft: `4px solid ${attPct >= 75 ? '#10b981' : '#ef4444'}` }}>
@@ -397,6 +424,7 @@ function ParentDashboard() {
                                                     <th>Paid</th>
                                                     <th>Due</th>
                                                     <th>Due Date</th>
+                                                    <th>Reminder</th>
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
@@ -410,6 +438,16 @@ function ParentDashboard() {
                                                         <td style={{ color: '#10b981' }}>₹{parseFloat(fee.paid_amount || 0).toLocaleString()}</td>
                                                         <td style={{ color: '#ef4444', fontWeight: 700 }}>₹{parseFloat(fee.due_amount || 0).toLocaleString()}</td>
                                                         <td>{fee.FeesStructure?.due_date ? new Date(fee.FeesStructure.due_date).toLocaleDateString() : '—'}</td>
+                                                        <td>
+                                                            {fee.reminder_date ? (
+                                                                <span style={{
+                                                                    color: fee.reminder_date <= TODAY_STR ? '#ef4444' : '#f59e0b',
+                                                                    fontWeight: 700
+                                                                }}>
+                                                                    {new Date(fee.reminder_date).toLocaleDateString()}
+                                                                </span>
+                                                            ) : '—'}
+                                                        </td>
                                                         <td>
                                                             <span className={`status-badge status-${fee.status === 'paid' ? 'paid' : fee.status === 'partial' ? 'partial' : 'pending'}`}>
                                                                 {fee.status}

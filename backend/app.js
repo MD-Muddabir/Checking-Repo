@@ -245,10 +245,11 @@ const syncDatabase = async () => {
     // ─────────────────────────────────────────────────────────────────
     try {
       await sequelize.query(`ALTER TABLE students ADD COLUMN is_full_course BOOLEAN DEFAULT false;`);
-      console.log("✅ Added is_full_course column to students table");
-    } catch (e) {
-      // Ignored if column already exists
-    }
+    } catch (e) { }
+
+    try {
+      await sequelize.query(`ALTER TABLE student_fees ADD COLUMN reminder_date DATE;`);
+    } catch (e) { }
 
     await sequelize.sync({ alter: false });
     console.log("✅ Database synchronized successfully");

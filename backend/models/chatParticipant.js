@@ -27,6 +27,10 @@ const ChatParticipant = sequelize.define("ChatParticipant", {
         type: DataTypes.STRING,
         allowNull: false,
     },
+    last_read_at: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
+    }
 }, {
     timestamps: false, // Typically no timestamps needed for simple mapping
     tableName: "chat_participants"

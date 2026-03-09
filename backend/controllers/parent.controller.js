@@ -130,10 +130,30 @@ exports.getDashboard = async (req, res) => {
             ]
         });
 
+        let responseStudents = [];
+        for (let student of students) {
+            let responseData = student.toJSON ? student.toJSON() : student;
+            if (responseData.is_full_course && responseData.Classes && responseData.Classes.length > 0) {
+                const classIds = responseData.Classes.map(c => c.id);
+                const allSubjects = await Subject.findAll({
+                    where: { institute_id: req.user.institute_id, class_id: { [Op.in]: classIds } },
+                    attributes: ["id", "name"]
+                });
+
+                const existingSubIds = new Set((responseData.Subjects || []).map(s => s.id));
+                const newSubjects = allSubjects.filter(s => !existingSubIds.has(s.id)).map(s => s.toJSON ? s.toJSON() : s);
+
+                if (newSubjects.length > 0) {
+                    responseData.Subjects = [...(responseData.Subjects || []), ...newSubjects];
+                }
+            }
+            responseStudents.push(responseData);
+        }
+
         res.status(200).json({
             success: true,
             message: "Dashboard data retrieved",
-            data: { students }
+            data: { students: responseStudents }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -162,7 +182,23 @@ exports.getStudentProfile = async (req, res) => {
             ]
         });
 
-        res.status(200).json({ success: true, data: student });
+        let responseData = student.toJSON ? student.toJSON() : student;
+        if (responseData.is_full_course && responseData.Classes && responseData.Classes.length > 0) {
+            const classIds = responseData.Classes.map(c => c.id);
+            const allSubjects = await Subject.findAll({
+                where: { institute_id: req.user.institute_id, class_id: { [Op.in]: classIds } },
+                attributes: ["id", "name"]
+            });
+
+            const existingSubIds = new Set((responseData.Subjects || []).map(s => s.id));
+            const newSubjects = allSubjects.filter(s => !existingSubIds.has(s.id)).map(s => s.toJSON ? s.toJSON() : s);
+
+            if (newSubjects.length > 0) {
+                responseData.Subjects = [...(responseData.Subjects || []), ...newSubjects];
+            }
+        }
+
+        res.status(200).json({ success: true, data: responseData });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

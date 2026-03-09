@@ -11,6 +11,7 @@ function FacultyDashboard() {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate();
     const [unreadCount, setUnreadCount] = useState(0);
+    const [chatUnreadCount, setChatUnreadCount] = useState(0);
 
     useEffect(() => {
         if (user?.features?.announcements) {
@@ -20,6 +21,14 @@ function FacultyDashboard() {
                 }
             }).catch(err => console.log(err));
         }
+
+        // Fetch chat unread count
+        api.get('/chat/unread-count').then(res => {
+            if (res.data.success) {
+                setChatUnreadCount(res.data.count);
+            }
+        }).catch(err => console.log(err));
+
     }, [user]);
 
     const ActionCard = ({ icon, title, path, badge }) => (
@@ -73,7 +82,7 @@ function FacultyDashboard() {
                     )}
 
                     <ActionCard path="/faculty/notes" icon="📚" title="Class Notes" />
-                    <ActionCard path="/faculty/chat" icon="💬" title="Academic Chat" />
+                    <ActionCard path="/faculty/chat" icon="💬" title="Academic Chat" badge={chatUnreadCount} />
 
                     <ActionCard path="/faculty/profile" icon="👤" title="My Profile" />
                 </div>

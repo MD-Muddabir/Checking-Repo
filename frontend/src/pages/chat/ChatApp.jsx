@@ -30,6 +30,21 @@ function ChatApp() {
         audience: "Both"
     });
 
+    // Admin/Manager Filters
+    const [filters, setFilters] = useState({
+        type: "",
+        faculty_id: "",
+        subject_id: "",
+        class_id: "",
+        parent_id: ""
+    });
+    const [filterData, setFilterData] = useState({
+        faculties: [],
+        subjects: [],
+        classes: [],
+        parents: []
+    });
+
     const messagesEndRef = useRef(null);
     const pollRef = useRef(null);
     const activeRoomRef = useRef(null);
@@ -52,11 +67,20 @@ function ChatApp() {
         if (activeRoom && activeRoom.id) { // Only poll if room actually exists in DB
             loadMessages(activeRoom.id);
             loadParticipants(activeRoom.id);
+            // Mark as read when entering room
+            markAsRead(activeRoom.id);
+
             pollRef.current = setInterval(() => {
                 if (activeRoomRef.current && activeRoomRef.current.id) {
                     loadMessages(activeRoomRef.current.id);
                 }
-            }, 4000);
+                fetchRooms(); // Keep room list (and badges) updated
+            }, 5000);
+        } else {
+            // Even if no active room, poll rooms to see notifications
+            pollRef.current = setInterval(() => {
+                fetchRooms();
+            }, 5000);
         }
 
         return () => { if (pollRef.current) clearInterval(pollRef.current); };
@@ -65,14 +89,7 @@ function ChatApp() {
     const loadInitialData = async () => {
         try {
             setLoadingData(true);
-
-            // Get rooms
-            const res = await api.get("/chat/rooms");
-            let loadedRooms = [];
-            if (res.data.success) {
-                loadedRooms = res.data.data || [];
-                setRooms(loadedRooms);
-            }
+            await fetchRooms();
 
             // Get subjects based on role
             if (user?.role === "student") {
@@ -80,6 +97,21 @@ function ChatApp() {
                 if (subRes.data.success) {
                     setEnrolledSubjects(subRes.data.data.Subjects || []);
                 }
+            } else if (user?.role === "admin" || user?.role === "manager" || user?.role === "owner") {
+                // Fetch filter options
+                const [facRes, subRes, clsRes, parRes] = await Promise.all([
+                    api.get("/faculty"),
+                    api.get("/subjects"),
+                    api.get("/classes"),
+                    api.get("/parents")
+                ]);
+
+                setFilterData({
+                    faculties: facRes.data.success ? facRes.data.data : [],
+                    subjects: subRes.data.success ? subRes.data.data : [],
+                    classes: clsRes.data.success ? clsRes.data.data : [],
+                    parents: parRes.data.success ? parRes.data.data : []
+                });
             } else if (user?.role === "parent") {
                 const parRes = await api.get("/parents/dashboard");
                 if (parRes.data.success) {
@@ -104,6 +136,39 @@ function ChatApp() {
             toast.error("Failed to load chat data.");
         } finally {
             setLoadingData(false);
+        }
+    };
+
+    const fetchRooms = async (currentFilters = filters) => {
+        try {
+            // Build query string
+            const params = new URLSearchParams();
+            Object.entries(currentFilters).forEach(([key, val]) => {
+                if (val) params.append(key, val);
+            });
+
+            const res = await api.get(`/chat/rooms?${params.toString()}`);
+            if (res.data.success) {
+                setRooms(res.data.data || []);
+            }
+        } catch (err) {
+            console.error("Fetch rooms error:", err);
+        }
+    };
+
+    const handleFilterChange = (key, value) => {
+        const newFilters = { ...filters, [key]: value };
+        setFilters(newFilters);
+        fetchRooms(newFilters);
+    };
+
+    const markAsRead = async (roomId) => {
+        try {
+            await api.post(`/chat/room/${roomId}/read`);
+            // Update local state to immediately show as read
+            setRooms(prev => prev.map(r => r.id === roomId ? { ...r, unread_count: 0 } : r));
+        } catch (err) {
+            console.error("Mark as read error:", err);
         }
     };
 
@@ -225,6 +290,10 @@ function ChatApp() {
         setActiveRoom(room);
         setMessages([]);
         setParticipants([]);
+        if (room.id) {
+            markAsRead(room.id);
+        }
+        fetchRooms();
     };
 
     // ─── Direct Chats for Student ───
@@ -240,6 +309,7 @@ function ChatApp() {
                     subject_id: sub.id,
                     name: `Direct Chat - ${sub.name}`,
                     message_count: 0,
+                    unread_count: 0,
                     last_message_at: null
                 };
             }
@@ -309,6 +379,58 @@ function ChatApp() {
                             </button>
                         )}
                     </div>
+
+                    {/* Admin Filters UI */}
+                    {(user?.role === "admin" || user?.role === "manager" || user?.role === "owner") && (
+                        <div className="chat-filters" style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <select
+                                className="form-input"
+                                style={{ fontSize: '0.75rem', padding: '4px' }}
+                                value={filters.type}
+                                onChange={(e) => handleFilterChange('type', e.target.value)}
+                            >
+                                <option value="">All Types</option>
+                                <option value="group">Group Rooms</option>
+                                <option value="direct">Direct Chats</option>
+                            </select>
+                            <select
+                                className="form-input"
+                                style={{ fontSize: '0.75rem', padding: '4px' }}
+                                value={filters.class_id}
+                                onChange={(e) => handleFilterChange('class_id', e.target.value)}
+                            >
+                                <option value="">All Classes</option>
+                                {filterData.classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                            </select>
+                            <select
+                                className="form-input"
+                                style={{ fontSize: '0.75rem', padding: '4px' }}
+                                value={filters.faculty_id}
+                                onChange={(e) => handleFilterChange('faculty_id', e.target.value)}
+                            >
+                                <option value="">All Faculty</option>
+                                {filterData.faculties.map(f => <option key={f.id} value={f.id}>{f.User?.name || f.id}</option>)}
+                            </select>
+                            <select
+                                className="form-input"
+                                style={{ fontSize: '0.75rem', padding: '4px' }}
+                                value={filters.subject_id}
+                                onChange={(e) => handleFilterChange('subject_id', e.target.value)}
+                            >
+                                <option value="">All Subjects</option>
+                                {filterData.subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </select>
+                            <select
+                                className="form-input"
+                                style={{ fontSize: '0.75rem', padding: '4px', gridColumn: 'span 2' }}
+                                value={filters.parent_id}
+                                onChange={(e) => handleFilterChange('parent_id', e.target.value)}
+                            >
+                                <option value="">Filter by Parent</option>
+                                {filterData.parents.map(p => <option key={p.id} value={p.id}>{p.User?.name || p.name || 'Parent'}</option>)}
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 <div className="chat-room-list">
@@ -332,8 +454,8 @@ function ChatApp() {
                                             <div className="room-details">
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                     <h4 className="room-name">{room.name || `Direct Chat - ${enrolledSubjects.find(s => s.id === room.subject_id)?.name || "Subject"}`}</h4>
-                                                    {room.message_count > 0 && (
-                                                        <span className="msg-count-badge">{room.message_count}</span>
+                                                    {room.unread_count > 0 && (
+                                                        <span className="msg-count-badge">{room.unread_count}</span>
                                                     )}
                                                 </div>
                                                 <p className="room-subtitle">Personal chat with faculty</p>
@@ -361,8 +483,8 @@ function ChatApp() {
                                     <div className="room-details">
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <h4 className="room-name">{getRoomLabel(room)}</h4>
-                                            {room.message_count > 0 && (
-                                                <span className="msg-count-badge">{room.message_count}</span>
+                                            {room.unread_count > 0 && (
+                                                <span className="msg-count-badge">{room.unread_count}</span>
                                             )}
                                         </div>
                                         <p className="room-subtitle">{getRoomSubLabel(room)}</p>
