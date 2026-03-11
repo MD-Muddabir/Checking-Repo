@@ -333,14 +333,17 @@ exports.gradeSubmission = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Cannot grade a pending submission' });
         }
 
-        if (marks_obtained > assignment.max_marks || marks_obtained < 0) {
-            return res.status(400).json({ success: false, message: `Marks must be between 0 and ${assignment.max_marks}` });
+        const marks = parseFloat(marks_obtained);
+        const max = parseFloat(assignment.max_marks);
+
+        if (isNaN(marks) || marks > max || marks < 0) {
+            return res.status(400).json({ success: false, message: `Marks must be between 0 and ${max}` });
         }
 
-        const calculatedGrade = grade || calculateGrade(marks_obtained, assignment.max_marks);
+        const calculatedGrade = grade || calculateGrade(marks, max);
 
         await submission.update({
-            marks_obtained,
+            marks_obtained: marks,
             grade: calculatedGrade,
             feedback,
             status: 'graded',
