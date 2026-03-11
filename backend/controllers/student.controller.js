@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Student Controller
  * Handles CRUD operations for students
  * Implements institute-level data isolation
@@ -90,7 +90,7 @@ exports.createStudent = async (req, res) => {
         });
 
 
-        // Create student record — if this fails, rollback the user to avoid orphan
+        // Create student record â€” if this fails, rollback the user to avoid orphan
         let student;
         try {
             student = await Student.create({
@@ -238,7 +238,7 @@ exports.getAllStudents = async (req, res) => {
                 },
                 subjectIncludeOptions
             ],
-            distinct: true, // Prevents duplicate counts/rows if student takes multiple subjects
+            distinct: true,
         });
 
         res.status(200).json({
@@ -275,7 +275,7 @@ exports.getMe = async (req, res) => {
                 },
                 {
                     model: Class,
-                    attributes: ["id", "name"],
+                    attributes: ["id", "name", "section"],
                     through: { attributes: [] }
                 },
                 {
@@ -335,7 +335,7 @@ exports.getStudentById = async (req, res) => {
                 },
                 {
                     model: Class,
-                    attributes: ["id", "name"],
+                    attributes: ["id", "name", "section"],
                     through: { attributes: [] }
                 },
                 {
@@ -596,3 +596,5 @@ exports.getStudentStats = async (req, res) => {
 };
 
 module.exports = exports;
+
+

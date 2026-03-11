@@ -56,6 +56,7 @@ const AdminFacultyAttendance = lazy(() => import("../pages/admin/FacultyAttendan
 const AdminFacultyViewAttendance = lazy(() => import("../pages/admin/AdminFacultyViewAttendance"));
 const AdminManageFacultyAttendance = lazy(() => import("../pages/admin/AdminManageFacultyAttendance"));
 const AdminBiometric = lazy(() => import("../pages/admin/Biometric"));
+const AdminAssignments = lazy(() => import("../pages/admin/AdminAssignments")); // Added Assignments
 const FacultyViewAttendance = lazy(() => import("../pages/faculty/ViewAttendance"));
 // Faculty Pages
 const FacultyDashboard = lazy(() => import("../pages/faculty/Dashboard"));
@@ -67,6 +68,7 @@ const FacultyAnnouncements = lazy(() => import("../pages/faculty/Announcements")
 const FacultySchedule = lazy(() => import("../pages/faculty/MySchedule")); // Added Timetable
 const ScanFacultyQR = lazy(() => import("../pages/faculty/ScanFacultyQR")); // Added ScanFacultyQR
 const FacultyNotes = lazy(() => import("../pages/faculty/FacultyNotes")); // Added Notes
+const FacultyAssignments = lazy(() => import("../pages/faculty/Assignments")); // Added Assignments
 const ChatApp = lazy(() => import("../pages/chat/ChatApp")); // Added Chat
 
 // Student Pages
@@ -78,10 +80,12 @@ const PayFees = lazy(() => import("../pages/student/PayFees"));
 const ScanAttendance = lazy(() => import("../pages/student/ScanAttendance"));
 const StudentTimetable = lazy(() => import("../pages/student/Timetable")); // Added Timetable
 const StudentNotes = lazy(() => import("../pages/student/StudentNotes")); // Added Notes
+const StudentAssignments = lazy(() => import("../pages/student/Assignments")); // Added Assignments
 
 // Parent Pages
 const ParentDashboard = lazy(() => import("../pages/parent/Dashboard"));
 const ParentTimetable = lazy(() => import("../pages/parent/Timetable"));
+const ParentAssignments = lazy(() => import("../pages/parent/Assignments")); // Added Assignments
 
 // Common Pages
 const NotFound = lazy(() => import("../pages/common/NotFound"));
@@ -164,6 +168,7 @@ function AppRoutes() {
                 <Route path="expenses" element={<AdminExpenses />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="notes" element={<AdminNotes />} />
+                <Route path="assignments" element={<AdminAssignments />} />
                 <Route path="biometric" element={<AdminBiometric />} />
                 <Route path="chat-monitor" element={<ChatApp />} />
                 <Route path="profile" element={<Profile />} />
@@ -189,6 +194,7 @@ function AppRoutes() {
                 <Route path="announcements" element={<FacultyAnnouncements />} />
                 <Route path="timetable" element={<FacultySchedule />} />
                 <Route path="notes" element={<FacultyNotes />} />
+                <Route path="assignments" element={<FacultyAssignments />} />
                 <Route path="chat" element={<ChatApp />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="*" element={<Navigate to="/faculty/dashboard" />} />
@@ -212,6 +218,7 @@ function AppRoutes() {
                 <Route path="buy-plan" element={<Pricing />} />
                 <Route path="timetable" element={<StudentTimetable />} />
                 <Route path="notes" element={<StudentNotes />} />
+                <Route path="assignments" element={<StudentAssignments />} />
                 <Route path="chat" element={<ChatApp />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="*" element={<Navigate to="/student/dashboard" />} />
@@ -228,6 +235,7 @@ function AppRoutes() {
               <Routes>
                 <Route path="dashboard" element={<ParentDashboard />} />
                 <Route path="timetable" element={<ParentTimetable />} />
+                <Route path="assignments" element={<ParentAssignments />} />
                 <Route path="chat" element={<ChatApp />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="*" element={<Navigate to="/parent/dashboard" />} />

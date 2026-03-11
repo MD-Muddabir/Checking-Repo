@@ -342,16 +342,23 @@ function ViewAttendance() {
                                     backgroundColor: 'var(--card-bg)',
                                     zIndex: 1
                                 }}>Student</th>
-                                {daysArray.map(day => (
-                                    <th key={day} style={{
-                                        padding: '1rem 0.5rem',
-                                        textAlign: 'center',
-                                        borderBottom: '1px solid var(--border-color)',
-                                        color: 'var(--text-secondary)',
-                                        fontSize: '0.8rem',
-                                        minWidth: '35px'
-                                    }}>{day}</th>
-                                ))}
+                                {daysArray.map(day => {
+                                    const dateObj = new Date(parseInt(y), parseInt(m) - 1, day);
+                                    const dayOfWeek = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+                                    return (
+                                        <th key={day} style={{
+                                            padding: '1rem 0.5rem',
+                                            textAlign: 'center',
+                                            borderBottom: '1px solid var(--border-color)',
+                                            color: 'var(--text-secondary)',
+                                            fontSize: '0.8rem',
+                                            minWidth: '35px'
+                                        }}>
+                                            <div style={{ fontSize: '0.65rem', fontWeight: 'normal', marginBottom: '2px' }}>{dayOfWeek}</div>
+                                            <div>{day}</div>
+                                        </th>
+                                    );
+                                })}
                             </tr>
                         </thead>
                         <tbody>

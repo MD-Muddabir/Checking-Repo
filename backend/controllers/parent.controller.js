@@ -337,4 +337,95 @@ exports.getNotes = async (req, res) => {
     }
 };
 
+/**
+ * Get a single parent by ID (Admin)
+ * @route GET /api/parents/:id
+ * @access Admin
+ */
+exports.getParentById = async (req, res) => {
+    try {
+        const institute_id = req.user.institute_id;
+        const parent = await User.findOne({
+            where: { id: req.params.id, institute_id, role: "parent" },
+            attributes: ["id", "name", "email", "phone", "status"],
+            include: [{
+                model: Student,
+                as: "LinkedStudents",
+                attributes: ["id", "roll_number"],
+                include: [{ model: User, attributes: ["name"] }],
+                through: { attributes: ["relationship"] }
+            }]
+        });
+        if (!parent) return res.status(404).json({ success: false, message: "Parent not found" });
+        res.status(200).json({ success: true, data: parent });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Update a parent and their linked students
+ * @route PUT /api/parents/:id
+ * @access Admin
+ */
+exports.updateParent = async (req, res) => {
+    try {
+        const institute_id = req.user.institute_id;
+        const { name, email, phone, status, password, student_ids } = req.body;
+
+        const parent = await User.findOne({
+            where: { id: req.params.id, institute_id, role: "parent" }
+        });
+        if (!parent) return res.status(404).json({ success: false, message: "Parent not found" });
+
+        const updateData = { name, email, phone, status };
+        if (password && password.length >= 6) {
+            updateData.password_hash = await hashPassword(password);
+        }
+
+        await parent.update(updateData);
+
+        // Update linked students if provided
+        if (student_ids !== undefined) {
+            // Remove all existing links
+            await StudentParent.destroy({ where: { parent_id: parent.id } });
+            if (Array.isArray(student_ids) && student_ids.length > 0) {
+                const links = student_ids.map(sid => ({
+                    student_id: sid,
+                    parent_id: parent.id,
+                    relationship: "guardian"
+                }));
+                await StudentParent.bulkCreate(links);
+            }
+        }
+
+        res.status(200).json({ success: true, message: "Parent updated successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+/**
+ * Delete a parent
+ * @route DELETE /api/parents/:id
+ * @access Admin
+ */
+exports.deleteParent = async (req, res) => {
+    try {
+        const institute_id = req.user.institute_id;
+        const parent = await User.findOne({
+            where: { id: req.params.id, institute_id, role: "parent" }
+        });
+        if (!parent) return res.status(404).json({ success: false, message: "Parent not found" });
+
+        // Remove all student links first
+        await StudentParent.destroy({ where: { parent_id: parent.id } });
+        await parent.destroy();
+
+        res.status(200).json({ success: true, message: "Parent deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 module.exports = exports;

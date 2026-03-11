@@ -25,7 +25,10 @@ function Announcements() {
 
     useEffect(() => {
         fetchAnnouncements();
-    }, []);
+        if (['admin', 'manager'].includes(user?.role)) {
+            api.post("/admin/clear-unread-announcements").catch(err => console.error(err));
+        }
+    }, [user?.role]);
 
     const fetchAnnouncements = async () => {
         try {

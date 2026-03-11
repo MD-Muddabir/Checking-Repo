@@ -16,6 +16,24 @@ router.get(
     adminController.getDashboardStats
 );
 
+// Clear Unread Counts
+router.post(
+    "/clear-unread-announcements",
+    verifyToken,
+    checkSubscription,
+    allowRoles("admin", "manager"),
+    adminController.clearUnreadAnnouncements
+);
+
+router.post(
+    "/clear-unread-chats",
+    verifyToken,
+    checkSubscription,
+    allowRoles("admin", "manager"),
+    adminController.clearUnreadChats
+);
+
+
 // Plan Usage Stats
 router.get(
     "/usage",

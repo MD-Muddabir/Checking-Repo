@@ -1,4 +1,5 @@
-const { Student, Faculty, Class, User, StudentFee } = require("../models");
+const { Student, Faculty, Class, User, StudentFee, Announcement, ChatMessage, ChatRoom } = require("../models");
+const { Op } = require("sequelize");
 
 exports.getDashboardStats = async (req, res) => {
     try {
@@ -43,6 +44,30 @@ exports.getDashboardStats = async (req, res) => {
         const totalDiscount = studentFees.reduce((sum, sf) => sum + parseFloat(sf.discount_amount || 0), 0);
         const totalDue = studentFees.reduce((sum, sf) => sum + parseFloat(sf.due_amount || 0), 0);
 
+        // Unread Counts
+        const currentUser = await User.findByPk(req.user.id);
+        const lastChatSeenAt = currentUser.last_chat_seen_at || new Date(0);
+        const lastAnnouncementSeenAt = currentUser.last_announcement_seen_at || new Date(0);
+
+        const unreadChatCount = await ChatMessage.count({
+            include: [{
+                model: ChatRoom,
+                where: { institute_id }
+            }],
+            where: {
+                created_at: { [Op.gt]: lastChatSeenAt },
+                sender_id: { [Op.ne]: req.user.id }
+            }
+        });
+
+        const unreadAnnouncementCount = await Announcement.count({
+            where: {
+                institute_id,
+                createdAt: { [Op.gt]: lastAnnouncementSeenAt },
+                created_by: { [Op.ne]: req.user.id }
+            }
+        });
+
         res.status(200).json({
             success: true,
             data: {
@@ -52,7 +77,9 @@ exports.getDashboardStats = async (req, res) => {
                 totalAdmins,
                 activeStudents,
                 totalDiscount,
-                totalDue
+                totalDue,
+                unreadChatCount,
+                unreadAnnouncementCount
             }
         });
 
@@ -64,6 +91,27 @@ exports.getDashboardStats = async (req, res) => {
         });
     }
 };
+
+exports.clearUnreadAnnouncements = async (req, res) => {
+    try {
+        await User.update({ last_announcement_seen_at: new Date() }, { where: { id: req.user.id } });
+        res.status(200).json({ success: true, message: "Cleared unread announcements count" });
+    } catch (error) {
+        console.error("Clear announcements error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.clearUnreadChats = async (req, res) => {
+    try {
+        await User.update({ last_chat_seen_at: new Date() }, { where: { id: req.user.id } });
+        res.status(200).json({ success: true, message: "Cleared unread chats count" });
+    } catch (error) {
+        console.error("Clear chats error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 
 // --- Admin Management ---
 

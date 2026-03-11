@@ -1,4 +1,4 @@
-const { Timetable, TimetableSlot, Class, Subject, Faculty, User } = require("../models");
+﻿const { Timetable, TimetableSlot, Class, Subject, Faculty, User } = require("../models");
 const { Op } = require("sequelize");
 
 // --- SLOT MANAGEMENT ---
@@ -153,7 +153,7 @@ exports.getTimetableByFaculty = async (req, res) => {
         const timetables = await Timetable.findAll({
             where: { institute_id, faculty_id },
             include: [
-                { model: Class, attributes: ['id', 'name'] },
+                { model: Class, attributes: ['id', 'name', 'section'] },
                 { model: Subject, attributes: ['id', 'name'] },
                 { model: TimetableSlot, attributes: ['id', 'start_time', 'end_time'] }
             ]
@@ -203,3 +203,4 @@ exports.updateTimetableEntry = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
+

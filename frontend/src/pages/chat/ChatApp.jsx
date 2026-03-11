@@ -52,7 +52,10 @@ function ChatApp() {
     // Initial load
     useEffect(() => {
         loadInitialData();
-    }, []);
+        if (['admin', 'manager'].includes(user?.role)) {
+            api.post("/admin/clear-unread-chats").catch(err => console.error(err));
+        }
+    }, [user?.role]);
 
     // Scroll to bottom
     useEffect(() => {

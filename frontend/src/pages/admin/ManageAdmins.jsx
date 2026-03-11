@@ -13,6 +13,7 @@ const CRUD_MODULES = [
     { val: 'classes', label: 'Manage Classes', icon: '📚', desc: 'Class records management' },
     { val: 'subjects', label: 'Manage Subjects', icon: '📖', desc: 'Subject records management' },
     { val: 'fees', label: 'Fee Structure', icon: '💰', desc: 'Fee structures & collections' },
+    { val: 'expenses', label: 'Record Expenses', icon: '💸', desc: 'Add & delete expenses' },
 ];
 
 const CRUD_OPS = [
@@ -30,8 +31,11 @@ const TOGGLE_MODULES = [
     { val: 'reports', label: 'Reports & Analytics', icon: '📊', desc: 'Attendance & academic reports' },
     { val: 'announcements', label: 'Announcements', icon: '📢', desc: 'Post & manage announcements' },
     { val: 'exams', label: 'Exams', icon: '📝', desc: 'Exam schedules & results' },
-    { val: 'expenses', label: 'Record Expenses', icon: '💸', desc: 'Add & view expenses' },
+    { val: 'collect_fees', label: 'Collect Fees', icon: '💰', desc: 'Collect & view student fees' },
+    { val: 'payment_history', label: 'Payment History', icon: '🧾', desc: 'View payment history & cards' },
     { val: 'transport', label: 'Transport Fees', icon: '🚌', desc: 'Bus routes & transport fees' },
+    { val: 'parents', label: 'Manage Parents', icon: '👨‍👩‍👧', desc: 'View & manage parent records' },
+    { val: 'biometric', label: 'Bio-Metric', icon: '🔐', desc: 'Biometric device management' },
 ];
 
 // ── Helpers ─────────────────────────────────────────────

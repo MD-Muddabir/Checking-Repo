@@ -183,7 +183,7 @@ exports.getAllFaculty = async (req, res) => {
                     include: [
                         {
                             model: Class,
-                            attributes: ["id", "name"],
+                            attributes: ["id", "name", "section"],
                         }
                     ]
                 },

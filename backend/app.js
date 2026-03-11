@@ -95,6 +95,8 @@ app.use("/api/webhook", require("./routes/webhook.routes"));
 app.use("/api/chat", require("./routes/chat.routes"));
 app.use("/api/parents", require("./routes/parent.routes"));
 app.use("/api/biometric", require("./routes/biometric.routes"));
+app.use("/api/notes", require("./routes/note.routes"));
+app.use("/api/assignments", require("./routes/assignment.routes"));
 
 // ============================================
 // 404 HANDLER

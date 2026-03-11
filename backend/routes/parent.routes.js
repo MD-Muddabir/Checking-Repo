@@ -4,21 +4,6 @@ const parentController = require("../controllers/parent.controller");
 const verifyToken = require("../middlewares/auth.middleware");
 const allowRoles = require("../middlewares/role.middleware");
 
-// Admin routes for parent management
-router.post(
-    "/",
-    verifyToken,
-    allowRoles("admin", "manager"),
-    parentController.createParent
-);
-
-router.get(
-    "/",
-    verifyToken,
-    allowRoles("admin", "manager"),
-    parentController.getAllParents
-);
-
 // Parent Portal Routes
 router.get(
     "/dashboard",
@@ -61,5 +46,42 @@ router.get(
     allowRoles("parent"),
     parentController.getNotes
 );
+
+// Admin routes for parent management
+router.post(
+    "/",
+    verifyToken,
+    allowRoles("admin", "manager"),
+    parentController.createParent
+);
+
+router.get(
+    "/",
+    verifyToken,
+    allowRoles("admin", "manager"),
+    parentController.getAllParents
+);
+
+router.put(
+    "/:id",
+    verifyToken,
+    allowRoles("admin", "manager"),
+    parentController.updateParent
+);
+
+router.delete(
+    "/:id",
+    verifyToken,
+    allowRoles("admin", "manager"),
+    parentController.deleteParent
+);
+
+router.get(
+    "/:id",
+    verifyToken,
+    allowRoles("admin", "manager"),
+    parentController.getParentById
+);
+
 
 module.exports = router;

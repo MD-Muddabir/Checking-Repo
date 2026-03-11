@@ -36,6 +36,10 @@ const BiometricDevice = require("./biometricDevice");
 const BiometricEnrollment = require("./biometricEnrollment");
 const BiometricPunch = require("./biometricPunch");
 const BiometricSettings = require("./biometricSettings");
+const Assignment = require("./assignment");
+const AssignmentSubmission = require("./assignmentSubmission");
+const AssignmentSubmissionHistory = require("./assignmentSubmissionHistory");
+const AssignmentSetting = require("./assignmentSetting");
 
 // Associations
 
@@ -299,6 +303,40 @@ BiometricDevice.hasMany(BiometricPunch, { foreignKey: "device_id" });
 BiometricSettings.belongsTo(Institute, { foreignKey: "institute_id" });
 Institute.hasOne(BiometricSettings, { foreignKey: "institute_id" });
 
+// Assignment Associations
+Assignment.belongsTo(Institute, { foreignKey: "institute_id" });
+Institute.hasMany(Assignment, { foreignKey: "institute_id" });
+
+Assignment.belongsTo(User, { as: "faculty", foreignKey: "faculty_id" });
+User.hasMany(Assignment, { foreignKey: "faculty_id" });
+
+Assignment.belongsTo(Class, { foreignKey: "class_id" });
+Class.hasMany(Assignment, { foreignKey: "class_id" });
+
+Assignment.belongsTo(Subject, { foreignKey: "subject_id" });
+Subject.hasMany(Assignment, { foreignKey: "subject_id" });
+
+// AssignmentSubmission Associations
+AssignmentSubmission.belongsTo(Institute, { foreignKey: "institute_id" });
+Institute.hasMany(AssignmentSubmission, { foreignKey: "institute_id" });
+
+AssignmentSubmission.belongsTo(Assignment, { foreignKey: "assignment_id" });
+Assignment.hasMany(AssignmentSubmission, { foreignKey: "assignment_id" });
+
+AssignmentSubmission.belongsTo(Student, { foreignKey: "student_id" });
+Student.hasMany(AssignmentSubmission, { foreignKey: "student_id" });
+
+AssignmentSubmission.belongsTo(User, { as: "grader", foreignKey: "graded_by" });
+User.hasMany(AssignmentSubmission, { foreignKey: "graded_by" });
+
+// AssignmentSubmissionHistory Associations
+AssignmentSubmissionHistory.belongsTo(AssignmentSubmission, { foreignKey: "submission_id" });
+AssignmentSubmission.hasMany(AssignmentSubmissionHistory, { foreignKey: "submission_id" });
+
+// AssignmentSetting Associations
+AssignmentSetting.belongsTo(Institute, { foreignKey: "institute_id" });
+Institute.hasOne(AssignmentSetting, { foreignKey: "institute_id" });
+
 module.exports = {
     sequelize,
     Plan,
@@ -335,4 +373,8 @@ module.exports = {
     BiometricEnrollment,
     BiometricPunch,
     BiometricSettings,
+    Assignment,
+    AssignmentSubmission,
+    AssignmentSubmissionHistory,
+    AssignmentSetting,
 };

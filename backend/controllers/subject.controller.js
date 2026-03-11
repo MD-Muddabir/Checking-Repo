@@ -71,7 +71,7 @@ exports.getAllSubjects = async (req, res) => {
                 },
                 {
                     model: Class,
-                    attributes: ["id", "name"],
+                    attributes: ["id", "name", "section"],
                 },
             ],
         });
@@ -104,7 +104,7 @@ exports.getSubjectById = async (req, res) => {
                 },
                 {
                     model: Class,
-                    attributes: ["id", "name"],
+                    attributes: ["id", "name", "section"],
                 },
             ],
         });

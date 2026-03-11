@@ -1,4 +1,4 @@
-const fs = require("fs");
+﻿const fs = require("fs");
 const path = require("path");
 const { Note, NoteDownload, Faculty, Subject, Class, User } = require("../models");
 
@@ -87,7 +87,7 @@ exports.getNotesBySubject = async (req, res) => {
             where: { subject_id: subjectId, institute_id: req.user.institute_id },
             include: [
                 { model: Faculty, attributes: ['id', 'user_id'], include: [{ model: User, attributes: ['id', 'name', 'email'] }] },
-                { model: Class, attributes: ['id', 'name'] }
+                { model: Class, attributes: ['id', 'name', 'section'] }
             ],
             order: [['created_at', 'DESC']]
         });
@@ -144,7 +144,7 @@ exports.getAllNotes = async (req, res) => {
             include: [
                 { model: Faculty, attributes: ['id', 'user_id'], include: [{ model: User, attributes: ['id', 'name', 'email'] }] },
                 { model: Subject, attributes: ['id', 'name'] },
-                { model: Class, attributes: ['id', 'name'] }
+                { model: Class, attributes: ['id', 'name', 'section'] }
             ],
             order: [['created_at', 'DESC']]
         });
@@ -181,3 +181,4 @@ exports.recordDownload = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error", error: error.message });
     }
 };
+

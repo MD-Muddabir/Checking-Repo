@@ -82,6 +82,7 @@ function FacultyDashboard() {
                     )}
 
                     <ActionCard path="/faculty/notes" icon="📚" title="Class Notes" />
+                    <ActionCard path="/faculty/assignments" icon="📝" title="Assignments" />
                     <ActionCard path="/faculty/chat" icon="💬" title="Academic Chat" badge={chatUnreadCount} />
 
                     <ActionCard path="/faculty/profile" icon="👤" title="My Profile" />

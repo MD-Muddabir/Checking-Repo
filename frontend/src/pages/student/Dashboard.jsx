@@ -80,6 +80,7 @@ function StudentDashboard() {
                     )}
 
                     <ActionCard path="/student/notes" icon="📚" title="My Notes" />
+                    <ActionCard path="/student/assignments" icon="📝" title="Assignments" />
                     <ActionCard path="/student/chat" icon="💬" title="Subject Chat" badge={chatUnreadCount} />
 
                     <ActionCard path="/student/profile" icon="👤" title="My Profile" />

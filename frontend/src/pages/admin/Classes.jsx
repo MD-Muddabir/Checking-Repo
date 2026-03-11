@@ -196,15 +196,16 @@ function Classes() {
                     </div>
                 ) : (
                     filteredClasses.map((classItem) => (
-                        <div key={classItem.id} className="card" style={{ padding: "1.5rem" }}>
+                        <div key={classItem.id} className="card" style={{ padding: "1.3rem" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "1rem" }}>
                                 <div>
                                     <h3 style={{ margin: 0, fontSize: "1.5rem", color: "#6366f1" }}>
                                         {classItem.name}
+                                        {/* {classItem.name} {classItem.section ? `Section ${classItem.section}` : ""} */}
                                     </h3>
                                     {classItem.section && (
                                         <p style={{ margin: "0.25rem 0 0 0", color: "#6b7280" }}>
-                                            Section: {classItem.section}
+                                            Section: <span style={{ color: "#6366f1" }}> {classItem.section} </span>
                                         </p>
                                     )}
                                 </div>

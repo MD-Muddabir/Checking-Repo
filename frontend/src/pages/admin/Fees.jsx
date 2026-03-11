@@ -269,10 +269,13 @@ function Fees() {
     if (loading) return <div className="dashboard-container"><div className="dashboard-loading">Loading fees...</div></div>;
 
     const tabs = [
-        { id: 'collect', label: '💰 Collect Fees', icon: '💰' },
-        { id: 'history', label: '📋 Payment History', icon: '📋' },
+        ...(isAdmin || user.permissions?.includes('collect_fees') ? [{ id: 'collect', label: '💰 Collect Fees', icon: '💰' }] : []),
+        ...(isAdmin || user.permissions?.includes('payment_history') ? [{ id: 'history', label: '📋 Payment History', icon: '📋' }] : []),
         ...(isAdmin || hasPerm('fees', 'read') ? [{ id: 'structure', label: '📐 Fee Structures', icon: '📐' }] : []),
     ];
+    // Default to first available tab
+    const validTab = tabs.find(t => t.id === tab) ? tab : (tabs[0]?.id || 'collect');
+    if (validTab !== tab) setTimeout(() => setTab(validTab), 0);
 
     const pendingCount = studentFees.filter(sf => sf.status === 'pending').length;
     const partialCount = studentFees.filter(sf => sf.status === 'partial').length;
@@ -379,12 +382,19 @@ function Fees() {
             })()}
 
             {/* Summary stats */}
-            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(5,1fr)', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px,1fr))', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                 <div className="stat-card">
                     <div className="stat-icon">⏳</div>
                     <div className="stat-content">
-                        <h3 style={{ color: '#f59e0b' }}>{pendingCount + partialCount}</h3>
-                        <p>Pending / Partial</p>
+                        <h3 style={{ color: '#ef4444' }}>{pendingCount}</h3>
+                        <p>Pending</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon">⚠️</div>
+                    <div className="stat-content">
+                        <h3 style={{ color: '#f59e0b' }}>{partialCount}</h3>
+                        <p>Partial</p>
                     </div>
                 </div>
                 <div className="stat-card">
@@ -394,46 +404,52 @@ function Fees() {
                         <p>Fully Paid</p>
                     </div>
                 </div>
-                <div className="stat-card">
-                    <div className="stat-icon">💵</div>
-                    <div className="stat-content">
-                        <h3 style={{ color: '#6366f1' }}>₹{totalCollected.toLocaleString()}</h3>
-                        <p>Total Collected</p>
-                    </div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon">🔔</div>
-                    <div className="stat-content">
-                        <h3 style={{ color: '#ef4444' }}>₹{totalDue.toLocaleString()}</h3>
-                        <p>Total Dues</p>
-                    </div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-icon">🎉</div>
-                    <div className="stat-content">
-                        <h3 style={{ color: '#a855f7' }}>₹{totalDiscount.toLocaleString()}</h3>
-                        <p>Total Discount Given</p>
-                    </div>
-                </div>
+                {(isAdmin || user.permissions?.includes('payment_history')) && (
+                    <>
+                        <div className="stat-card">
+                            <div className="stat-icon">💵</div>
+                            <div className="stat-content">
+                                <h3 style={{ color: '#6366f1' }}>₹{totalCollected.toLocaleString()}</h3>
+                                <p>Total Collected</p>
+                            </div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-icon">🔔</div>
+                            <div className="stat-content">
+                                <h3 style={{ color: '#ef4444' }}>₹{totalDue.toLocaleString()}</h3>
+                                <p>Total Dues</p>
+                            </div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-icon">🎉</div>
+                            <div className="stat-content">
+                                <h3 style={{ color: '#a855f7' }}>₹{totalDiscount.toLocaleString()}</h3>
+                                <p>Total Discount Given</p>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: '0.25rem', borderBottom: '2px solid var(--border-color)', marginBottom: '1.5rem' }}>
-                {tabs.map(t => (
-                    <button key={t.id} onClick={() => setTab(t.id)} style={{
-                        padding: '0.65rem 1.25rem', border: 'none', background: 'none', cursor: 'pointer',
-                        fontWeight: tab === t.id ? '700' : '500', fontSize: '0.9rem',
-                        color: tab === t.id ? '#6366f1' : 'var(--text-secondary)',
-                        borderBottom: tab === t.id ? '3px solid #6366f1' : '3px solid transparent',
-                        marginBottom: '-2px', transition: 'all 0.15s'
-                    }}>
-                        {t.label}
-                    </button>
-                ))}
-            </div>
+            {tabs.length > 1 && (
+                <div style={{ display: 'flex', gap: '0.25rem', borderBottom: '2px solid var(--border-color)', marginBottom: '1.5rem' }}>
+                    {tabs.map(t => (
+                        <button key={t.id} onClick={() => setTab(t.id)} style={{
+                            padding: '0.65rem 1.25rem', border: 'none', background: 'none', cursor: 'pointer',
+                            fontWeight: validTab === t.id ? '700' : '500', fontSize: '0.9rem',
+                            color: validTab === t.id ? '#6366f1' : 'var(--text-secondary)',
+                            borderBottom: validTab === t.id ? '3px solid #6366f1' : '3px solid transparent',
+                            marginBottom: '-2px', transition: 'all 0.15s'
+                        }}>
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* ═══ COLLECT FEES TAB ═══ */}
-            {tab === 'collect' && (
+            {validTab === 'collect' && (isAdmin || user.permissions?.includes('collect_fees')) && (
                 <>
                     {/* Filters */}
                     <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
@@ -602,7 +618,7 @@ function Fees() {
             )}
 
             {/* ═══ PAYMENT HISTORY TAB ═══ */}
-            {tab === 'history' && (
+            {validTab === 'history' && (isAdmin || user.permissions?.includes('payment_history')) && (
                 <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
                     <div className="card">
                         <h3 style={{ marginBottom: '1rem' }}>💵 Payment Logs</h3>
@@ -667,7 +683,7 @@ function Fees() {
             )}
 
             {/* ═══ FEE STRUCTURES TAB ═══ */}
-            {tab === 'structure' && hasPerm('fees', 'read') && (
+            {validTab === 'structure' && hasPerm('fees', 'read') && (
                 <div className="card">
                     <div className="table-container">
                         <table className="table">

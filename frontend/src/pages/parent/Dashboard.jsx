@@ -140,6 +140,7 @@ function ParentDashboard() {
                             { id: 'marks', label: '📈 Marks' },
                             { id: 'fees', label: '💳 Fees' },
                             { id: 'timetable', label: '📅 Timetable' },
+                            { id: 'assignments', label: '📝 Assignments' },
                             { id: 'chat', label: '💬 Chat' }
                         ].map(tab => (
                             <button
@@ -237,6 +238,7 @@ function ParentDashboard() {
                                             {[
                                                 { label: "📅 View Timetable", tab: "timetable", color: "#6366f1" },
                                                 { label: "📋 View Attendance", tab: "attendance", color: "#10b981" },
+                                                { label: "📝 View Assignments", action: () => navigate('/parent/assignments'), color: "#0ea5e9" },
                                                 { label: "💬 Chat with Faculty", action: () => navigate('/parent/chat'), color: "#f59e0b" },
                                                 { label: "💳 View Fees", tab: "fees", color: "#ef4444" }
                                             ].map((a, i) => (

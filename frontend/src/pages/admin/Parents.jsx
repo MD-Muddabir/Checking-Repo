@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import "./Dashboard.css";
-import * as parentService from "../../services/parent.service";
 
 function Parents() {
     const { user } = useContext(AuthContext);
@@ -12,13 +11,17 @@ function Parents() {
     const [students, setStudents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [editMode, setEditMode] = useState(false);
     const [search, setSearch] = useState("");
+    const [saving, setSaving] = useState(false);
 
     const [formData, setFormData] = useState({
+        id: null,
         name: "",
         email: "",
         phone: "",
         password: "",
+        status: "active",
         student_ids: [],
         relationships: []
     });
@@ -28,10 +31,16 @@ function Parents() {
         fetchStudents();
     }, []);
 
+    useEffect(() => {
+        if (!loading) {
+            fetchParents();
+        }
+    }, [search]);
+
     const fetchParents = async () => {
         try {
-            const data = await parentService.getAllParents(search);
-            setParents(data.data || []);
+            const res = await api.get(`/parents${search ? `?search=${encodeURIComponent(search)}` : ""}`);
+            setParents(res.data.data || []);
         } catch (error) {
             console.error("Error fetching parents:", error);
         } finally {
@@ -48,64 +57,85 @@ function Parents() {
         }
     };
 
-    useEffect(() => {
-        if (!loading) {
-            fetchParents();
-        }
-    }, [search]);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        // Extract student_ids and default relationships to 'guardian' if empty
-        const s_ids = formData.student_ids;
-        const rels = s_ids.map(() => 'guardian');
-
+        setSaving(true);
         try {
-            await parentService.createParent({
-                ...formData,
-                relationships: rels
-            });
-            alert("Parent added successfully");
+            if (editMode) {
+                await api.put(`/parents/${formData.id}`, formData);
+                alert("Parent updated successfully");
+            } else {
+                await api.post("/parents", formData);
+                alert("Parent added successfully");
+            }
             setShowModal(false);
             resetForm();
             fetchParents();
         } catch (error) {
-            const errorMessage = error.response?.data?.message || "Something went wrong";
-            alert(errorMessage);
+            alert(error.response?.data?.message || "Something went wrong");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleEdit = async (parent) => {
+        // Load full parent data including linked students
+        try {
+            const res = await api.get(`/parents/${parent.id}`);
+            const p = res.data.data;
+            setFormData({
+                id: p.id,
+                name: p.name,
+                email: p.email,
+                phone: p.phone || "",
+                password: "",
+                status: p.status,
+                student_ids: (p.LinkedStudents || []).map(s => String(s.id)),
+                relationships: []
+            });
+            setEditMode(true);
+            setShowModal(true);
+        } catch (err) {
+            alert("Failed to load parent details");
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this parent? This cannot be undone.")) return;
+        try {
+            await api.delete(`/parents/${id}`);
+            alert("Parent deleted successfully");
+            fetchParents();
+        } catch (error) {
+            alert(error.response?.data?.message || "Error deleting parent");
         }
     };
 
     const resetForm = () => {
         setFormData({
+            id: null,
             name: "",
             email: "",
             phone: "",
             password: "",
+            status: "active",
             student_ids: [],
             relationships: []
         });
+        setEditMode(false);
     };
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleStudentChange = (e) => {
         const options = e.target.options;
         const selected = [];
         for (let i = 0; i < options.length; i++) {
-            if (options[i].selected) {
-                selected.push(options[i].value);
-            }
+            if (options[i].selected) selected.push(options[i].value);
         }
-        setFormData({
-            ...formData,
-            student_ids: selected,
-        });
+        setFormData({ ...formData, student_ids: selected });
     };
 
     if (loading) {
@@ -124,9 +154,7 @@ function Parents() {
                 </div>
                 <div className="dashboard-header-right">
                     <ThemeSelector />
-                    <Link to="/admin/dashboard" className="btn btn-secondary">
-                        ← Back
-                    </Link>
+                    <Link to="/admin/dashboard" className="btn btn-secondary">← Back</Link>
                     <button
                         onClick={() => { resetForm(); setShowModal(true); }}
                         className="btn btn-primary"
@@ -150,6 +178,24 @@ function Parents() {
                 </div>
             </div>
 
+            {/* Stats */}
+            <div className="stats-grid" style={{ marginBottom: "2rem" }}>
+                <div className="stat-card">
+                    <div className="stat-icon">👨‍👩‍👧</div>
+                    <div className="stat-content">
+                        <h3>{parents.length}</h3>
+                        <p>Total Parents</p>
+                    </div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-icon">🔗</div>
+                    <div className="stat-content">
+                        <h3>{parents.reduce((sum, p) => sum + (p.LinkedStudents?.length || 0), 0)}</h3>
+                        <p>Linked Students</p>
+                    </div>
+                </div>
+            </div>
+
             {/* Parents Table */}
             <div className="card">
                 <div className="card-header">
@@ -159,26 +205,27 @@ function Parents() {
                     <table className="table">
                         <thead>
                             <tr>
+                                <th>#</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th>Linked Students</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {parents.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
-                                        No parents found
+                                    <td colSpan="7" style={{ textAlign: "center", padding: "2rem" }}>
+                                        No parents found. Click "+ Add Parent" to create one.
                                     </td>
                                 </tr>
                             ) : (
-                                parents.map((parent) => (
+                                parents.map((parent, idx) => (
                                     <tr key={parent.id}>
-                                        <td>
-                                            <strong>{parent.name}</strong>
-                                        </td>
+                                        <td>{idx + 1}</td>
+                                        <td><strong>{parent.name}</strong></td>
                                         <td>{parent.email}</td>
                                         <td>{parent.phone}</td>
                                         <td>
@@ -193,12 +240,25 @@ function Parents() {
                                             )}
                                         </td>
                                         <td>
-                                            <span
-                                                className={`badge badge-${parent.status === "active" ? "success" : "danger"
-                                                    }`}
-                                            >
+                                            <span className={`badge badge-${parent.status === "active" ? "success" : "danger"}`}>
                                                 {parent.status}
                                             </span>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                                                <button
+                                                    className="btn btn-sm btn-primary"
+                                                    onClick={() => handleEdit(parent)}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    className="btn btn-sm btn-danger"
+                                                    onClick={() => handleDelete(parent.id)}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -208,15 +268,13 @@ function Parents() {
                 </div>
             </div>
 
-            {/* Add Parent Modal */}
+            {/* Add/Edit Parent Modal */}
             {showModal && (
                 <div className="modal-overlay" onClick={() => setShowModal(false)}>
                     <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: "700px" }}>
                         <div className="modal-header">
-                            <h3>Add New Parent</h3>
-                            <button onClick={() => setShowModal(false)} className="btn btn-sm">
-                                ×
-                            </button>
+                            <h3>{editMode ? "Edit Parent" : "Add New Parent"}</h3>
+                            <button onClick={() => setShowModal(false)} className="btn btn-sm">×</button>
                         </div>
                         <div className="modal-body">
                             <form onSubmit={handleSubmit}>
@@ -232,7 +290,6 @@ function Parents() {
                                             required
                                         />
                                     </div>
-
                                     <div className="form-group">
                                         <label className="form-label">Email *</label>
                                         <input
@@ -260,7 +317,7 @@ function Parents() {
                                     </div>
                                     <div className="form-group">
                                         <label className="form-label">
-                                            Password * <small>(Min 6 chars)</small>
+                                            Password {editMode ? "(Leave blank to keep current)" : "* (Min 6 chars)"}
                                         </label>
                                         <input
                                             type="password"
@@ -268,14 +325,29 @@ function Parents() {
                                             className="form-input"
                                             value={formData.password}
                                             onChange={handleChange}
-                                            required
-                                            minLength={6}
+                                            required={!editMode}
+                                            minLength={editMode ? 0 : 6}
                                         />
                                     </div>
                                 </div>
 
+                                {editMode && (
+                                    <div className="form-group">
+                                        <label className="form-label">Status</label>
+                                        <select
+                                            name="status"
+                                            className="form-select"
+                                            value={formData.status}
+                                            onChange={handleChange}
+                                        >
+                                            <option value="active">Active</option>
+                                            <option value="blocked">Blocked</option>
+                                        </select>
+                                    </div>
+                                )}
+
                                 <div className="form-group" style={{ marginTop: "1rem" }}>
-                                    <label className="form-label">Link Students (Multiple selection allowed)</label>
+                                    <label className="form-label">Link Students (Ctrl/Cmd to select multiple)</label>
                                     <select
                                         name="student_ids"
                                         className="form-select"
@@ -285,20 +357,19 @@ function Parents() {
                                         style={{ height: "150px" }}
                                     >
                                         {students.map((s) => (
-                                            <option key={s.id} value={s.id}>
+                                            <option key={s.id} value={String(s.id)}>
                                                 {s.User?.name} (Roll: {s.roll_number})
                                             </option>
                                         ))}
                                     </select>
-                                    <small style={{ color: "#6b7280" }}>Hold Ctrl (Windows) or Cmd (Mac) to select multiple</small>
                                 </div>
 
                                 <div className="modal-footer">
                                     <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">
                                         Cancel
                                     </button>
-                                    <button type="submit" className="btn btn-primary">
-                                        Add Parent
+                                    <button type="submit" className="btn btn-primary" disabled={saving}>
+                                        {saving ? "Saving..." : editMode ? "Update Parent" : "Add Parent"}
                                     </button>
                                 </div>
                             </form>

@@ -139,7 +139,7 @@ function AdminDashboard() {
         return false;
     };
 
-    const ActionCard = ({ icon, title, path, featureKey, highlight }) => (
+    const ActionCard = ({ icon, title, path, featureKey, highlight, badge }) => (
         <div
             onClick={() => handleNavigation(path, featureKey)}
             className="action-card"
@@ -147,6 +147,11 @@ function AdminDashboard() {
         >
             <span className="action-icon">{icon}</span>
             <span className="action-title">{title}</span>
+            {badge > 0 && (
+                <span style={{ position: 'absolute', top: 10, right: 10, background: 'var(--danger, #ef4444)', color: 'white', padding: '2px 6px', borderRadius: '10px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 10 }}>
+                    {badge > 99 ? '99+' : badge}
+                </span>
+            )}
             {planDetails && featureKey && (
                 (featureKey === 'fees' && !planDetails.features.fees) ||
                 (featureKey === 'announcements' && !planDetails.features.announcements) ||
@@ -444,12 +449,13 @@ function AdminDashboard() {
                     {hasPermission('reports') && <ActionCard path={`${basePath}/reports`} icon="📊" title="Reports & Analytics" featureKey="reports" />}
                     {hasPermission('exams') && <ActionCard path={`${basePath}/exams`} icon="📝" title="Manage Exams" featureKey="exams" />}
                     {hasPermission('classes') && <ActionCard path={`${basePath}/timetable`} icon="📅" title="Master Timetable" featureKey="timetable" />}
-                    {hasPermission('announcements') && <ActionCard path={`${basePath}/announcements`} icon="📢" title="Announcements" featureKey="announcements" />}
+                    {hasPermission('announcements') && <ActionCard path={`${basePath}/announcements`} icon="📢" title="Announcements" featureKey="announcements" badge={stats.unreadAnnouncementCount || 0} />}
 
                     {/* New Notes & Chat Features */}
+                    <ActionCard path={`${basePath}/assignments`} icon="📝" title="Assignments" />
                     <ActionCard path={`${basePath}/biometric`} icon="🔐" title="Biometric Attendance" />
                     <ActionCard path={`${basePath}/notes`} icon="📓" title="All Notes" />
-                    <ActionCard path={`${basePath}/chat-monitor`} icon="💬" title="Chat Monitor" />
+                    <ActionCard path={`${basePath}/chat-monitor`} icon="💬" title="Chat Monitor" badge={stats.unreadChatCount || 0} />
 
                     {isAdmin && (
                         <div onClick={() => navigate(`${basePath}/settings`)} className="action-card" style={{ cursor: 'pointer' }}>

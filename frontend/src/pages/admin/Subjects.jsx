@@ -273,10 +273,14 @@ function Subjects() {
                                         </td>
                                         <td>
                                             {subject.Class ? (
-                                                <>
+                                                <span style={{ fontWeight: 500 }}>
                                                     {subject.Class.name}
-                                                    {subject.Class.section && ` - ${subject.Class.section}`}
-                                                </>
+                                                    {subject.Class.section && (
+                                                        <span style={{ marginLeft: '4px', color: 'var(--primary-color)', fontSize: '0.9em' }}>
+                                                            ({subject.Class.section})
+                                                        </span>
+                                                    )}
+                                                </span>
                                             ) : (
                                                 <span style={{ color: "#6b7280" }}>Not assigned</span>
                                             )}

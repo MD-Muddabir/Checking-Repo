@@ -1,0 +1,3 @@
+
+Phase 1:
+    Student Dashbaord in Academic Chat section in that Students can sending the images also and Faculty can recive the Images and Faculty can also sending the images. means IF student have a dout then student In the Academic Chat section send the Doout img into Faculty then Faculty can see and solve the dout then Faculty can send the Image of solution into Student. Both features working Chat and Imag. you can think and choose the best and professional option and implement one by one and give me the proper working features.

@@ -156,9 +156,16 @@ function AdminFacultyViewAttendance() {
                                 <thead style={{ backgroundColor: "var(--bg-secondary)", borderBottom: "1px solid var(--border-color)" }}>
                                     <tr>
                                         <th style={{ padding: "15px", textAlign: "left", position: "sticky", left: 0, backgroundColor: "var(--bg-secondary)", zIndex: 1, minWidth: "200px" }}>FACULTY</th>
-                                        {daysArray.map(d => (
-                                            <th key={d} style={{ padding: "10px 5px", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)" }}>{d}</th>
-                                        ))}
+                                        {daysArray.map(d => {
+                                            const dateObj = new Date(year, month - 1, d);
+                                            const dayOfWeek = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+                                            return (
+                                                <th key={d} style={{ padding: "10px 5px", textAlign: "center", fontSize: "0.85rem", color: "var(--text-muted)", minWidth: "35px" }}>
+                                                    <div style={{ fontSize: '0.65rem', fontWeight: 'normal', marginBottom: '2px' }}>{dayOfWeek}</div>
+                                                    <div>{d}</div>
+                                                </th>
+                                            );
+                                        })}
                                     </tr>
                                 </thead>
                                 <tbody>

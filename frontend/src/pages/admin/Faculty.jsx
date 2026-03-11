@@ -272,14 +272,16 @@ function Faculty() {
                                         </td>
                                         <td>
                                             {facultyMember.Subjects && facultyMember.Subjects.length > 0 ? (
-                                                <ul style={{ margin: 0, paddingLeft: "1.2rem", fontSize: "0.85rem", color: "#444" }}>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                                                     {facultyMember.Subjects.map((sub) => (
-                                                        <li key={sub.id}>{sub.Class?.name} - {sub.name}</li>
+                                                        <span key={sub.id} style={{ color: "#e2e8f0", fontSize: '0.75rem', padding: '4px 4px', fontWeight: '500' }}>
+                                                            {sub.Class?.name}{sub.Class?.section ? ` (${sub.Class.section})` : ''} : {sub.name}
+                                                        </span>
                                                     ))}
-                                                </ul>
+                                                </div>
                                             ) : (
                                                 <span style={{ fontSize: "0.85rem", color: "#888", fontStyle: "italic" }}>
-                                                    Not assigned to any class or subject
+                                                    No subjects assigned
                                                 </span>
                                             )}
                                         </td>
@@ -440,3 +442,4 @@ function Faculty() {
 }
 
 export default Faculty;
+
