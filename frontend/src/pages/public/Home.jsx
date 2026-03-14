@@ -1,64 +1,49 @@
-/**
- * Public Landing Page
- * Hero section and key features
- */
-import { Link } from "react-router-dom";
-import PublicNavbar from "../../components/layout/PublicNavbar";
-import "./Public.css";
-import "./PublicPages.css";
+import { useState, useEffect } from 'react';
+import Navbar from '../../components/landing/Navbar';
+import Hero from '../../components/landing/Hero';
+import Features from '../../components/landing/Features';
+import Pricing from '../../components/landing/Pricing';
+import Testimonials from '../../components/landing/Testimonials';
+import FAQ from '../../components/landing/FAQ';
+import Contact from '../../components/landing/Contact';
+import Footer from '../../components/landing/Footer';
+import { useCursor } from '../../hooks/useCursor';
+import '../../styles/landing.css';
 
-const Home = () => {
-    return (
-        <div className="public-container">
-            <PublicNavbar />
+export default function Home() {
+  useCursor(); // Custom lag cursor effect
 
-            {/* Hero */}
-            <header className="hero-section">
-                <div className="hero-content">
-                    <h1 className="hero-title">Manage Your Coaching Institute<br />Like a Pro</h1>
-                    <p className="hero-subtitle">
-                        The all-in-one platform for student management, attendance, fees, and online exams.
-                        Streamline your operations today.
-                    </p>
-                    <div className="hero-actions">
-                        <Link to="/register" className="btn-primary-large">Start Free Trial</Link>
-                        <Link to="/pricing" className="btn-secondary-large">View Plans</Link>
-                    </div>
-                </div>
-            </header>
+  // Progress Bar logic
+  useEffect(() => {
+    const update = () => {
+      const scrolled = window.scrollY;
+      const total = document.body.scrollHeight - window.innerHeight;
+      const pct = (scrolled / total) * 100;
+      const bar = document.getElementById('progress-bar');
+      if (bar) bar.style.width = pct + '%';
+    };
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
 
-            {/* Features */}
-            <section className="features-section">
-                <h2 className="section-title">Why Choose Student SaaS?</h2>
-                <div className="features-grid">
-                    <div className="feature-card">
-                        <span className="feature-icon" style={{ fontSize: "3rem" }}>📊</span>
-                        <h3>Advanced Analytics</h3>
-                        <p>Track student performance, attendance trends, and institute growth with detailed, real-time reports.</p>
-                    </div>
-                    <div className="feature-card">
-                        <span className="feature-icon" style={{ fontSize: "3rem" }}>✅</span>
-                        <h3>Smart Attendance</h3>
-                        <p>Automated attendance tracking for students and faculty with instant notifications.</p>
-                    </div>
-                    <div className="feature-card">
-                        <span className="feature-icon" style={{ fontSize: "3rem" }}>💳</span>
-                        <h3>Fee Management</h3>
-                        <p>Hassle-free fee collection, receipt generation, and automated reminders for due payments.</p>
-                    </div>
-                    <div className="feature-card">
-                        <span className="feature-icon" style={{ fontSize: "3rem" }}>📱</span>
-                        <h3>Parent Portal</h3>
-                        <p>Keep parents informed about their child's progress with a dedicated portal and real-time updates.</p>
-                    </div>
-                </div>
-            </section>
+  return (
+    <div className='landing-root'>
+      <div id='progress-bar' />
+      <div id='cursor' />
+      <div id='cursor-ring' />
 
-            <footer className="public-footer">
-                <p style={{ textAlign: "center", width: "100%" }}>© 2026 EduManage. All rights reserved.</p>
-            </footer>
-        </div>
-    );
-};
+      <Navbar />
+      
+      <main>
+        <Hero />
+        <Features />
+        <Pricing />
+        <Testimonials />
+        <FAQ />
+        <Contact />
+      </main>
 
-export default Home;
+      <Footer />
+    </div>
+  );
+}
