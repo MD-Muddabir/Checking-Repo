@@ -1,1 +1,0 @@
-import{a as t}from"./index-C8DP4F9k.js";const n=async()=>(await t.get("/parents/dashboard")).data,r=async e=>(await t.get(`/parents/attendance/${e}`)).data,o=async e=>(await t.get(`/parents/results/${e}`)).data,c=async e=>(await t.get(`/parents/fees/${e}`)).data;export{r as a,o as b,c,n as g};

@@ -34,6 +34,7 @@ const Revenue = lazy(() => import("../pages/superadmin/Revenue"));
 const SuperAdminSettings = lazy(() => import("../pages/superadmin/Settings"));
 const SuperAdminExpenses = lazy(() => import("../pages/superadmin/Expenses"));
 const LandingPage = lazy(() => import("../pages/superadmin/LandingPage")); // Added Landing Page Management
+const InstituteLimits = lazy(() => import("../pages/superadmin/InstituteLimits")); // Phase 3: Institute Limits
 
 // Admin Pages
 const AdminDashboard = lazy(() => import("../pages/admin/Dashboard"));
@@ -141,6 +142,7 @@ function AppRoutes() {
                 <Route path="expenses" element={<SuperAdminExpenses />} />
                 <Route path="settings" element={<SuperAdminSettings />} />
                 <Route path="landing-page" element={<LandingPage />} />
+                <Route path="institute-limits" element={<InstituteLimits />} />
                 <Route path="*" element={<Navigate to="/superadmin/dashboard" />} />
               </Routes>
             </ProtectedRoute>

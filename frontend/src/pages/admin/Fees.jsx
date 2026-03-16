@@ -465,13 +465,22 @@ function Fees() {
                         </select>
                         <div style={{ display: 'flex', gap: '4px' }}>
                             {[['pending', '⏳ Pending', '#ef4444'], ['partial', '⚠️ Partial', '#f59e0b'], ['paid', '✅ Paid', '#10b981'], ['all', '👥 All', '#6366f1']].map(([val, lbl, col]) => (
-                                <button key={val} onClick={() => setFilterStatus(val)} style={{
-                                    padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                                    fontWeight: filterStatus === val ? '700' : '500', fontSize: '0.85rem',
-                                    background: filterStatus === val ? `${col}22` : 'var(--card-bg)',
-                                    color: filterStatus === val ? col : 'var(--text-secondary)',
-                                    border: `1.5px solid ${filterStatus === val ? col : 'var(--border-color)'}`
-                                }}>{lbl}</button>
+                                <button
+                                    key={val}
+                                    onClick={() => setFilterStatus(val)}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        fontWeight: filterStatus === val ? '700' : '500',
+                                        fontSize: '0.85rem',
+                                        background: filterStatus === val ? `${col}22` : 'var(--card-bg)',
+                                        color: filterStatus === val ? col : 'var(--text-secondary)',
+                                        border: `1.5px solid ${filterStatus === val ? col : 'var(--border-color)'}`
+                                    }}
+                                >
+                                    {lbl}
+                                </button>
                             ))}
                         </div>
                     </div>

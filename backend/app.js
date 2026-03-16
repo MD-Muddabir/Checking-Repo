@@ -251,6 +251,8 @@ const syncDatabase = async () => {
     // ─────────────────────────────────────────────────────────────────
     // SAFE SYNC: alter:false only creates missing tables,
     // never modifies existing tables (prevents index duplication)
+    // Plus a few one-time ALTERs wrapped in try/catch so they are
+    // effectively no-ops once applied.
     // ─────────────────────────────────────────────────────────────────
     try {
       await sequelize.query(`ALTER TABLE students ADD COLUMN is_full_course BOOLEAN DEFAULT false;`);
@@ -258,6 +260,11 @@ const syncDatabase = async () => {
 
     try {
       await sequelize.query(`ALTER TABLE student_fees ADD COLUMN reminder_date DATE;`);
+    } catch (e) { }
+
+    // Ensure discount_amount exists on subscriptions for superadmin analytics
+    try {
+      await sequelize.query(`ALTER TABLE subscriptions ADD COLUMN discount_amount DECIMAL(10,2) DEFAULT 0;`);
     } catch (e) { }
 
     // Biometric attendance columns

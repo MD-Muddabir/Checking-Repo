@@ -34,6 +34,22 @@ router.get(
     controller.getAllInstitutes
 );
 
+// Phase 3: Get single institute full details
+router.get(
+    "/institutes/:id/details",
+    verifyToken,
+    allowRoles("super_admin"),
+    controller.getInstituteDetails
+);
+
+// Phase 3: Update institute limits & features (per-institute override)
+router.put(
+    "/institutes/:id/limits",
+    verifyToken,
+    allowRoles("super_admin"),
+    controller.updateInstituteLimits
+);
+
 router.put(
     "/institutes/:id/status",
     verifyToken,
@@ -46,6 +62,21 @@ router.delete(
     verifyToken,
     allowRoles("super_admin"),
     controller.deleteInstitute
+);
+
+// Phase 4: Institute Discounts
+router.post(
+    "/institutes/:id/discounts",
+    verifyToken,
+    allowRoles("super_admin"),
+    controller.applyInstituteDiscount
+);
+
+router.delete(
+    "/institutes/:id/discounts/:discountId",
+    verifyToken,
+    allowRoles("super_admin"),
+    controller.deleteInstituteDiscount
 );
 
 module.exports = router;

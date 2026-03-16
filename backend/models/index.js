@@ -46,6 +46,7 @@ const InstitutePublicProfile = require("./institutePublicProfile");
 const InstituteGalleryPhoto = require("./instituteGalleryPhoto");
 const InstituteReview = require("./instituteReview");
 const PublicEnquiry = require("./publicEnquiry");
+const InstituteDiscount = require("./instituteDiscount");
 
 const Lead = require("./lead");
 
@@ -358,6 +359,13 @@ Institute.hasMany(InstituteReview, { foreignKey: "institute_id" });
 PublicEnquiry.belongsTo(Institute, { foreignKey: "institute_id" });
 Institute.hasMany(PublicEnquiry, { foreignKey: "institute_id" });
 
+// InstituteDiscount Associations
+InstituteDiscount.belongsTo(Institute, { foreignKey: "institute_id" });
+Institute.hasMany(InstituteDiscount, { foreignKey: "institute_id" });
+
+InstituteDiscount.belongsTo(User, { as: "approver", foreignKey: "applied_by" });
+User.hasMany(InstituteDiscount, { foreignKey: "applied_by" });
+
 module.exports = {
     sequelize,
     Plan,
@@ -403,5 +411,6 @@ module.exports = {
     InstituteGalleryPhoto,
     InstituteReview,
     PublicEnquiry,
+    InstituteDiscount,
     Lead,
 };
