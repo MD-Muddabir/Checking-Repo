@@ -141,9 +141,17 @@ function AdminDashboard() {
 
     const ActionCard = ({ icon, title, path, featureKey, highlight, badge }) => (
         <div
-            onClick={() => handleNavigation(path, featureKey)}
-            className="action-card"
-            style={{ cursor: 'pointer', position: 'relative', ...(highlight ? { borderColor: '#6366f1', boxShadow: '0 0 0 2px rgba(99,102,241,0.3)' } : {}) }}
+            onClick={(e) => {
+                if (planDetails && planDetails.plan.is_free_trial && getTrialDaysLeft() <= 0) {
+                    e.preventDefault();
+                    setShowUpgradeModal(true);
+                    setBlockedFeature("All Features (Trial Expired)");
+                    return;
+                }
+                handleNavigation(path, featureKey);
+            }}
+            className={`action-card ${(planDetails && planDetails.plan.is_free_trial && getTrialDaysLeft() <= 0) ? 'disabled-card' : ''}`}
+            style={{ cursor: 'pointer', position: 'relative', ...(highlight ? { borderColor: '#6366f1', boxShadow: '0 0 0 2px rgba(99,102,241,0.3)' } : {}), opacity: (planDetails && planDetails.plan.is_free_trial && getTrialDaysLeft() <= 0) ? 0.6 : 1 }}
         >
             <span className="action-icon">{icon}</span>
             <span className="action-title">{title}</span>
@@ -152,18 +160,30 @@ function AdminDashboard() {
                     {badge > 99 ? '99+' : badge}
                 </span>
             )}
-            {planDetails && featureKey && (
-                (featureKey === 'fees' && !planDetails.features.fees) ||
-                (featureKey === 'announcements' && !planDetails.features.announcements) ||
-                (featureKey === 'attendance' && planDetails.features.attendance === 'none') ||
-                (featureKey === 'reports' && planDetails.features.reports === 'none') ||
-                (featureKey === 'auto_attendance' && !planDetails.features.auto_attendance) ||
-                (featureKey === 'timetable' && !planDetails.features.timetable)
+            {planDetails && (
+                ((planDetails.plan.is_free_trial && getTrialDaysLeft() <= 0) || 
+                (featureKey && (
+                    (featureKey === 'fees' && !planDetails.features.fees) ||
+                    (featureKey === 'announcements' && !planDetails.features.announcements) ||
+                    (featureKey === 'attendance' && planDetails.features.attendance === 'none') ||
+                    (featureKey === 'reports' && planDetails.features.reports === 'none') ||
+                    (featureKey === 'auto_attendance' && !planDetails.features.auto_attendance) ||
+                    (featureKey === 'timetable' && !planDetails.features.timetable)
+                )))
             ) && (
                     <span style={{ position: 'absolute', top: 5, right: 5, fontSize: '10px', background: '#e5e7eb', padding: '2px 5px', borderRadius: '4px' }}>🔒</span>
                 )}
         </div>
     );
+
+    const getTrialDaysLeft = () => {
+        if (!planDetails?.institute?.subscription_end) return 0;
+        const today = new Date();
+        const end = new Date(planDetails.institute.subscription_end);
+        end.setHours(23, 59, 59, 999);
+        const diff = end - today;
+        return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    };
 
     if (loading) {
         return (
@@ -202,6 +222,35 @@ function AdminDashboard() {
                     <button onClick={logout} className="btn btn-danger">Logout</button>
                 </div>
             </div>
+
+            {/* ══════════════ TRIAL BANNERS ══════════════ */}
+            {planDetails && planDetails.plan.is_free_trial && (
+                <div style={{ marginTop: '2rem' }}>
+                    {getTrialDaysLeft() <= 0 ? (
+                        <div style={{
+                            padding: '1.5rem', background: '#fef2f2', border: '1px solid #ef4444', 
+                            borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}>
+                            <div>
+                                <h3 style={{ color: '#b91c1c', margin: '0 0 0.5rem 0' }}>Trial Expired</h3>
+                                <p style={{ color: '#7f1d1d', margin: 0 }}>Your free trial has ended. You can no longer access features. Please upgrade your plan.</p>
+                            </div>
+                            <button className="btn btn-primary" onClick={() => navigate("/pricing")} style={{ background: '#ef4444', border: 'none' }}>Upgrade Now</button>
+                        </div>
+                    ) : getTrialDaysLeft() <= Math.max(2, Math.ceil(planDetails.plan.trial_days * 0.1)) ? (
+                        <div style={{
+                            padding: '1.5rem', background: '#fffbeb', border: '1px solid #f59e0b', 
+                            borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}>
+                            <div>
+                                <h3 style={{ color: '#b45309', margin: '0 0 0.5rem 0' }}>Trial Expiring Soon</h3>
+                                <p style={{ color: '#92400e', margin: 0 }}>You have reached {Math.floor(((planDetails.plan.trial_days - getTrialDaysLeft()) / planDetails.plan.trial_days) * 100)}% of your free trial. Only {getTrialDaysLeft()} days left.</p>
+                            </div>
+                            <button className="btn btn-primary" onClick={() => navigate("/pricing")} style={{ background: '#f59e0b', border: 'none' }}>Upgrade Now</button>
+                        </div>
+                    ) : null}
+                </div>
+            )}
 
             {/* ══════════════ STATS ══════════════ */}
             {user?.role === 'manager' && managerStats ? (
@@ -534,10 +583,12 @@ function AdminDashboard() {
                         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⭐</div>
                         <h2 style={{ color: '#1f2937', marginBottom: '0.5rem' }}>Upgrade Required</h2>
                         <p style={{ margin: '1rem 0', color: '#4b5563', lineHeight: '1.5' }}>
-                            The <strong>{blockedFeature}</strong> feature is not available in your current plan ({planDetails?.plan?.name}).
+                            {getTrialDaysLeft() <= 0 && planDetails?.plan?.is_free_trial 
+                                ? "Your free trial has expired. You need a regular subscription to access features." 
+                                : `The ${blockedFeature} feature is not available in your current plan (${planDetails?.plan?.name}).`}
                         </p>
                         <p style={{ color: '#6b7280', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-                            Please upgrade your subscription to access this feature.
+                            Please upgrade your subscription to gain access.
                         </p>
                         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                             <button className="btn btn-secondary" onClick={() => setShowUpgradeModal(false)}>Close</button>

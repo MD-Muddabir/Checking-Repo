@@ -19,6 +19,7 @@ function PaymentPage() {
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
     const [billingCycle, setBillingCycle] = useState("monthly");
+    const [hasUsedTrial, setHasUsedTrial] = useState(false);
 
     useEffect(() => {
         // If logged in, fetch current pending plan or plan from URL
@@ -42,6 +43,7 @@ function PaymentPage() {
                             // If we have a plan ID, use it!
                             // Also if we have Plan details directly, we can skip one API call, but let's stick to the flow
                             setPlanId(institute.plan_id);
+                            setHasUsedTrial(institute.has_used_trial || false);
 
                             // If plan is already in the include, use it
                             if (institute.Plan) {
@@ -61,6 +63,16 @@ function PaymentPage() {
                 } catch (e) {
                     navigate("/login");
                     return;
+                }
+            } else {
+                // If they provided planId in URL, fetch their profile just to get hasUsedTrial
+                try {
+                    const profile = await api.get("/auth/profile");
+                    if (profile.data.user && profile.data.user.Institute) {
+                        setHasUsedTrial(profile.data.user.Institute.has_used_trial || false);
+                    }
+                } catch (e) {
+                    // ignore if not logged in (handled by registration)
                 }
             }
 
@@ -89,11 +101,18 @@ function PaymentPage() {
     const handlePayment = async () => {
         setProcessing(true);
         try {
-            // 1. Initiate Payment
+            // Initiate Payment (Backend decides if it's a free trial based on `!institute.has_used_trial`)
             const initResponse = await api.post("/payment/initiate", {
                 planId: plan.id,
                 billingCycle
             });
+
+            // If backend handles free trial via initiate, it might just return success immediately without key
+            if (initResponse.data.trial_activated) {
+                alert("Free Trial Activated Successfully! Redirecting to Dashboard...");
+                window.location.href = "/admin/dashboard";
+                return;
+            }
 
             const { order, key } = initResponse.data;
 
@@ -178,45 +197,49 @@ function PaymentPage() {
             <div className="container-small">
                 <div className="payment-card">
                     <div className="payment-header">
-                        <h2>Complete Your Subscription</h2>
-                        <p>Secure payment for <strong>{plan.name}</strong></p>
+                        <h2>{(plan.is_free_trial && !hasUsedTrial) ? "Start Your Free Trial" : "Complete Your Subscription"}</h2>
+                        <p>{(plan.is_free_trial && !hasUsedTrial) ? `Activate secure trial for ${plan.name}` : `Secure payment for ${plan.name}`}</p>
                     </div>
 
-                    <div className="billing-cycle-selector">
-                        <label className={billingCycle === 'monthly' ? 'active' : ''}>
-                            <input
-                                type="radio"
-                                name="billing"
-                                value="monthly"
-                                checked={billingCycle === 'monthly'}
-                                onChange={() => setBillingCycle('monthly')}
-                            />
-                            Monthly (₹{plan.price}/mo)
-                        </label>
-                        <label className={billingCycle === 'yearly' ? 'active' : ''}>
-                            <input
-                                type="radio"
-                                name="billing"
-                                value="yearly"
-                                checked={billingCycle === 'yearly'}
-                                onChange={() => setBillingCycle('yearly')}
-                            />
-                            Yearly (Save 20%)
-                        </label>
-                    </div>
+                    {!(plan.is_free_trial && !hasUsedTrial) && (
+                        <div className="billing-cycle-selector">
+                            <label className={billingCycle === 'monthly' ? 'active' : ''}>
+                                <input
+                                    type="radio"
+                                    name="billing"
+                                    value="monthly"
+                                    checked={billingCycle === 'monthly'}
+                                    onChange={() => setBillingCycle('monthly')}
+                                />
+                                Monthly (₹{plan.price}/mo)
+                            </label>
+                            <label className={billingCycle === 'yearly' ? 'active' : ''}>
+                                <input
+                                    type="radio"
+                                    name="billing"
+                                    value="yearly"
+                                    checked={billingCycle === 'yearly'}
+                                    onChange={() => setBillingCycle('yearly')}
+                                />
+                                Yearly (Save 20%)
+                            </label>
+                        </div>
+                    )}
 
                     <div className="order-summary">
                         <div className="summary-row">
                             <span>Plan</span>
                             <span>{plan.name}</span>
                         </div>
-                        <div className="summary-row">
-                            <span>Billing Cycle</span>
-                            <span>{billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}</span>
-                        </div>
+                        {!(plan.is_free_trial && !hasUsedTrial) && (
+                            <div className="summary-row">
+                                <span>Billing Cycle</span>
+                                <span>{billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}</span>
+                            </div>
+                        )}
                         <div className="summary-row total">
                             <span>Total Amount</span>
-                            <span>₹{price}</span>
+                            <span>{(plan.is_free_trial && !hasUsedTrial) ? '₹0' : `₹${price}`}</span>
                         </div>
                     </div>
 
@@ -225,12 +248,14 @@ function PaymentPage() {
                         onClick={handlePayment}
                         disabled={processing}
                     >
-                        {processing ? "Processing..." : `Pay ₹${price}`}
+                        {processing ? "Processing..." : ((plan.is_free_trial && !hasUsedTrial) ? "Start Free Trial" : `Pay ₹${price}`)}
                     </button>
 
-                    <div className="secure-badge">
-                        🔒 Secured by Razorpay (Test Mode)
-                    </div>
+                    {!(plan.is_free_trial && !hasUsedTrial) && (
+                        <div className="secure-badge">
+                            🔒 Secured by Razorpay (Test Mode)
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

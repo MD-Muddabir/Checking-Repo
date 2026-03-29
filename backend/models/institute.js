@@ -14,6 +14,11 @@ const Institute = sequelize.define("Institute", {
     subscription_start: DataTypes.DATEONLY,
     subscription_end: DataTypes.DATEONLY,
     status: DataTypes.ENUM("active", "expired", "suspended", "pending"),
+    has_used_trial: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+
 
     // Snapshot of Plan Limits (for grandfathering)
     current_limit_students: {

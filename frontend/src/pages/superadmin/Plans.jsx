@@ -59,6 +59,9 @@ function Plans() {
         feature_mobile_app: false,
         feature_public_page: false,
 
+        is_free_trial: false,
+        trial_days: 0,
+
         razorpay_plan_id: "",
         is_popular: false
     };
@@ -90,6 +93,7 @@ function Plans() {
             payload.max_faculty = parseInt(payload.max_faculty);
             payload.max_classes = parseInt(payload.max_classes);
             payload.max_admin_users = parseInt(payload.max_admin_users);
+            payload.trial_days = parseInt(payload.trial_days || 0);
 
             if (editMode) {
                 await api.put(`/plans/${formData.id}`, payload);
@@ -187,7 +191,16 @@ function Plans() {
                             </div>
 
                             <div style={{ fontSize: "2rem", fontWeight: "bold", marginBottom: "1rem" }}>
-                                ₹{plan.price}
+                                {plan.is_free_trial ? (
+                                    <>
+                                        <span style={{ textDecoration: "line-through", color: "#9ca3af", marginRight: "0.5rem", fontSize: "1.2rem" }}>
+                                            ₹{plan.price}
+                                        </span>
+                                        <span style={{ color: "#10b981" }}>$0.00</span>
+                                    </>
+                                ) : (
+                                    <>₹{plan.price}</>
+                                )}
                                 <span style={{ fontSize: "0.875rem", fontWeight: "normal", color: "#6b7280" }}> / month</span>
                             </div>
 
@@ -197,6 +210,11 @@ function Plans() {
                                     <div><strong>Faculty:</strong> {plan.max_faculty}</div>
                                     <div><strong>Classes:</strong> {plan.max_classes}</div>
                                     <div><strong>Admins:</strong> {plan.max_admin_users}</div>
+                                    {plan.is_free_trial && (
+                                        <div style={{ gridColumn: '1 / -1', color: '#10b981', fontWeight: 'bold' }}>
+                                            <strong>Trial Days:</strong> {plan.trial_days}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -383,6 +401,19 @@ function Plans() {
                                                 required
                                             />
                                         </div>
+                                        {formData.is_free_trial && (
+                                            <div className="limit-input-group">
+                                                <label>Trial Days</label>
+                                                <input
+                                                    type="number"
+                                                    name="trial_days"
+                                                    className="form-input"
+                                                    value={formData.trial_days}
+                                                    onChange={handleChange}
+                                                    required
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -441,6 +472,7 @@ function Plans() {
                                             { key: 'feature_parent_portal', label: 'Parent Portal' },
                                             { key: 'feature_mobile_app', label: 'Mobile App' },
                                             { key: 'feature_public_page', label: '🌐 Public Web Page' },
+                                            { key: 'is_free_trial', label: 'Start Free Trial' },
                                             { key: 'is_popular', label: 'Mark as Popular' },
                                         ].map(feature => (
                                             <label key={feature.key} className="feature-checkbox">

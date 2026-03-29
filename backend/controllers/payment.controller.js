@@ -20,7 +20,53 @@ exports.initiatePayment = async (req, res) => {
         const plan = await Plan.findByPk(planId);
         if (!plan) return res.status(404).json({ message: "Plan not found" });
 
-        // Calculate amount
+        const institute = await Institute.findByPk(instituteId);
+
+        // Immediate activation for free trial
+        if (plan.is_free_trial && !institute.has_used_trial) {
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + (plan.trial_days || 14));
+
+            // Create Trial Subscription
+            await Subscription.create({
+                institute_id: instituteId,
+                plan_id: planId,
+                start_date: startDate,
+                end_date: endDate,
+                payment_status: "paid",
+                transaction_reference: "free_trial",
+                amount_paid: 0
+            });
+
+            // Update Institute
+            await institute.update({
+                status: "active",
+                plan_id: planId,
+                subscription_start: startDate,
+                subscription_end: endDate,
+                has_used_trial: true,
+                current_limit_students: plan.max_students,
+                current_limit_faculty: plan.max_faculty,
+                current_limit_classes: plan.max_classes,
+                current_limit_admins: plan.max_admin_users,
+                current_feature_attendance: plan.feature_attendance,
+                current_feature_auto_attendance: plan.feature_auto_attendance,
+                current_feature_fees: plan.feature_fees,
+                current_feature_reports: plan.feature_reports,
+                current_feature_announcements: plan.feature_announcements,
+                current_feature_export: plan.feature_export,
+                current_feature_timetable: plan.feature_timetable,
+                current_feature_whatsapp: plan.feature_whatsapp,
+                current_feature_custom_branding: plan.feature_custom_branding,
+                current_feature_multi_branch: plan.feature_multi_branch,
+                current_feature_api_access: plan.feature_api_access,
+            });
+
+            return res.json({ success: true, trial_activated: true });
+        }
+
+        // Calculate amount for paid plans
         let amount = Number(plan.price);
         if (billingCycle === 'yearly') {
             amount = amount * 12 * 0.8; // 20% discount

@@ -234,6 +234,22 @@ const checkFeatureAccess = (featureName) => {
                 timetable: institute.current_feature_timetable !== undefined && institute.current_feature_timetable !== null ? institute.current_feature_timetable : plan.feature_timetable,
             };
 
+            // NEW RULE: Trial Expiration
+            if (plan.is_free_trial && institute.subscription_end) {
+                const today = new Date();
+                const end = new Date(institute.subscription_end);
+                end.setHours(23, 59, 59, 999);
+                if (today > end) {
+                    return res.status(403).json({
+                        success: false,
+                        message: "Your free trial has expired. Please upgrade your plan to access features.",
+                        feature_locked: true,
+                        trial_expired: true,
+                        upgrade_required: true
+                    });
+                }
+            }
+
             // Check if feature is enabled
             let hasAccess = false;
 
@@ -331,9 +347,15 @@ const getUsageStats = async (req, res) => {
         res.json({
             success: true,
             data: {
+                institute: {
+                    subscription_end: institute.subscription_end,
+                    has_used_trial: institute.has_used_trial
+                },
                 plan: {
                     name: institute.Plan.name,
-                    price: institute.Plan.price
+                    price: institute.Plan.price,
+                    is_free_trial: institute.Plan.is_free_trial,
+                    trial_days: institute.Plan.trial_days
                 },
                 usage: {
                     students: {

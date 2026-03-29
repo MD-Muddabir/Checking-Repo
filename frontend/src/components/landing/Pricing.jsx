@@ -31,10 +31,24 @@ const getPlanFeatures = (plan) => {
 
     const features = [];
     if (plan.feature_students) features.push(`Up to ${plan.max_students === -1 ? 'Unlimited' : plan.max_students} students`);
-    if (plan.max_admins || plan.max_faculty) {
-        const admins = plan.max_admins === -1 ? 'Unlimited Admins' : `${plan.max_admins} Admins`;
-        const faculty = plan.max_faculty === -1 ? 'Unlimited Faculty' : `${plan.max_faculty} Faculty`;
-        features.push(`${admins} & ${faculty}`);
+    if (plan.max_admins != null || plan.max_faculty != null) {
+        let adminText = "";
+        let facultyText = "";
+
+        if (plan.max_admins != null) {
+            adminText = plan.max_admins === -1 ? 'Unlimited Admins' : `${plan.max_admins} Admins`;
+        }
+        if (plan.max_faculty != null) {
+            facultyText = plan.max_faculty === -1 ? 'Unlimited Faculty' : `${plan.max_faculty} Faculty`;
+        }
+
+        if (adminText && facultyText) {
+            features.push(`${adminText} & ${facultyText}`);
+        } else if (adminText) {
+            features.push(adminText);
+        } else if (facultyText) {
+            features.push(facultyText);
+        }
     } else {
         if (plan.feature_faculty) features.push("Faculty management");
     }
@@ -54,8 +68,7 @@ const getPlanFeatures = (plan) => {
 
 /**
  * Phase 3: Smart plan button logic
- * - Plan index 0 (first/cheapest plan): shows "Start Free Trial" if the user has NOT used it yet
- *   → once used (tracked in localStorage), shows "Upgrade to Basic Plan" (i.e., the *next* plan)
+ * - Plan index 0 (first/cheapest plan): shows "Start Free Trial" with $0 strikethrough.
  * - All other plans: show "Upgrade to <Plan Name>"
  */
 function PlanCard({ plan, isHot, isAnnual, planIndex, totalPlans, allPlans }) {
@@ -66,31 +79,21 @@ function PlanCard({ plan, isHot, isAnnual, planIndex, totalPlans, allPlans }) {
     const navigate = useNavigate();
     const { user } = useContext(AuthContext);
 
-    const hasUsedFreeTrial = localStorage.getItem('free_trial_used') === 'true';
+    const isFreeTrialPlan = plan.is_free_trial;
+    // ALWAYS display the $0 marketing for Free Trials on the public pricing page
+    const showZeroPrice = isFreeTrialPlan;
 
     const getButtonConfig = () => {
-      if (planIndex === 0) {
-        if (!hasUsedFreeTrial) {
-          return {
-            label: '🎁 Start Free Trial',
-            action: () => {
-              localStorage.setItem('free_trial_used', 'true');
-              if (user && user.role === 'admin') navigate(`/checkout?plan_id=${plan.id}&trial=true`);
-              else { localStorage.setItem("selectedPlan", plan.id); navigate('/register?plan=' + plan.id + '&trial=true'); }
-            },
-            className: isHot ? 'lp-btn-primary' : 'lp-btn-ghost',
-          };
-        } else {
-          const nextPlan = allPlans.length > 1 ? allPlans[1] : allPlans[0];
-          return {
-            label: `⬆️ Upgrade to ${nextPlan?.name || 'Basic Plan'}`,
-            action: () => {
-              if (user && user.role === 'admin') navigate(`/checkout?plan_id=${nextPlan.id}`);
-              else { localStorage.setItem("selectedPlan", nextPlan.id); navigate('/register?plan=' + nextPlan.id); }
-            },
-            className: 'lp-btn-ghost',
-          };
-        }
+      if (isFreeTrialPlan) {
+        return {
+          label: '🎁 Start Free Trial',
+          action: () => {
+            if (user && user.role === 'admin') navigate(`/checkout?plan_id=${plan.id}&trial=true`);
+            else { localStorage.setItem("selectedPlan", plan.id); navigate('/register?plan=' + plan.id + '&trial=true'); }
+          },
+          className: isHot || isFreeTrialPlan ? 'lp-btn-primary' : 'lp-btn-ghost',
+          disabled: false
+        };
       }
       return {
         label: `⬆️ Upgrade to ${plan.name || 'Plan'}`,
@@ -104,11 +107,11 @@ function PlanCard({ plan, isHot, isAnnual, planIndex, totalPlans, allPlans }) {
 
     const btn = getButtonConfig();
     const features = getPlanFeatures(plan) || [];
-    const showZeroPrice = (planIndex === 0 && !hasUsedFreeTrial);
 
     return (
-      <div className={`lp-plan-card ${isHot ? 'hot' : ''}`}>
-        {isHot && <div className='lp-plan-hot-pill'>Most Popular</div>}
+      <div className={`lp-plan-card ${isHot ? 'hot' : ''} ${isFreeTrialPlan ? 'free-trial-card' : ''}`}>
+        {isHot && !isFreeTrialPlan && <div className='lp-plan-hot-pill'>Most Popular</div>}
+        {isFreeTrialPlan && <div className='lp-plan-free-pill'>✨ 14-Day Free Trial</div>}
 
         <div className='lp-plan-icon'>{plan.icon || '📦'}</div>
         <h3 className='lp-plan-name'>{plan.name || 'Plan'}</h3>
@@ -125,7 +128,7 @@ function PlanCard({ plan, isHot, isAnnual, planIndex, totalPlans, allPlans }) {
         )}
 
         <p style={{ fontSize: '13px', color: 'var(--lp-muted)', marginTop: '-4px' }}>
-          {showZeroPrice ? '14-day free trial, no credit card required' : (isAnnual ? `Billed ₹${((basePrice || 0) * 12).toLocaleString()} annually` : 'Billed monthly')}
+          {showZeroPrice ? `${plan.trial_days || 14}-day free trial, no credit card required` : (isAnnual ? `Billed ₹${((basePrice || 0) * 12).toLocaleString()} annually` : 'Billed monthly')}
         </p>
 
         <div className='lp-plan-divider' />
@@ -138,15 +141,20 @@ function PlanCard({ plan, isHot, isAnnual, planIndex, totalPlans, allPlans }) {
 
         <button
           onClick={btn.action}
-          className={btn.className}
+          className={`${btn.className}`}
+          disabled={btn.disabled}
           style={{
             width: '100%',
             marginTop: 'auto',
-            border: !isHot ? '1px solid var(--lp-border)' : 'none',
-            cursor: 'pointer',
+            border: !isHot && !isFreeTrialPlan ? '1px solid var(--lp-border)' : 'none',
+            cursor: btn.disabled ? 'not-allowed' : 'pointer',
             font: 'inherit',
             fontSize: '14px',
             fontWeight: '600',
+            background: isFreeTrialPlan && !btn.disabled ? 'white' : undefined,
+            color: isFreeTrialPlan && !btn.disabled ? '#8b5cf6' : undefined,
+            position: 'relative',
+            zIndex: 2,
           }}
         >
           {btn.label || 'Select'}
@@ -161,15 +169,8 @@ function PlanCard({ plan, isHot, isAnnual, planIndex, totalPlans, allPlans }) {
 export default function Pricing() {
   useScrollReveal('reveal', 0.1);
   const [isAnnual, setIsAnnual] = useState(true);
-  const [trialUsed, setTrialUsed] = useState(localStorage.getItem('free_trial_used') === 'true');
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const onStorage = () => setTrialUsed(localStorage.getItem('free_trial_used') === 'true');
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
 
   useEffect(() => {
     fetchPlans();

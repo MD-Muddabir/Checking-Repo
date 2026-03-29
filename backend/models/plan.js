@@ -26,6 +26,15 @@ const Plan = sequelize.define("Plan", {
     },
 
     // Limits
+    is_free_trial: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    trial_days: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+
     max_students: {
         type: DataTypes.INTEGER,
         allowNull: false,

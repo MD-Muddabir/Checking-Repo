@@ -15,23 +15,31 @@ exports.registerInstitute = async (data) => {
     let subscriptionStart = null;
     let subscriptionEnd = null;
     let instituteStatus = "pending";
-    let plan = null;
+    let hasUsedTrial = false;
 
     if (planId) {
         plan = await Plan.findByPk(planId);
         if (plan) {
             subscriptionStart = new Date();
             const endDate = new Date();
-            endDate.setDate(endDate.getDate() + 30); // Default 30 days
-            subscriptionEnd = endDate;
-
-            // If free plan, activate immediately
-            if (Number(plan.price) === 0) {
+            
+            if (plan.is_free_trial) {
+                endDate.setDate(endDate.getDate() + (plan.trial_days || 14));
                 instituteStatus = "active";
+                hasUsedTrial = true;
             } else {
-                // If paid plan, subscription starts AFTER payment
-                subscriptionStart = null;
-                subscriptionEnd = null;
+                endDate.setDate(endDate.getDate() + 30); // Default 30 days
+                // If free plan (but not trial), activate immediately
+                if (Number(plan.price) === 0) {
+                    instituteStatus = "active";
+                } else {
+                    // If paid plan, subscription starts AFTER payment
+                    subscriptionStart = null;
+                    subscriptionEnd = null;
+                }
+            }
+            if (!plan.is_free_trial || (plan.is_free_trial && instituteStatus === "active")) {
+                subscriptionEnd = endDate;
             }
         }
     }
@@ -66,6 +74,7 @@ exports.registerInstitute = async (data) => {
         current_feature_custom_branding: plan ? plan.feature_custom_branding : false,
         current_feature_multi_branch: plan ? plan.feature_multi_branch : false,
         current_feature_api_access: plan ? plan.feature_api_access : false,
+        has_used_trial: hasUsedTrial,
     });
 
     // Hash Password

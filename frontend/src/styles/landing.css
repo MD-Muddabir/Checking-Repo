@@ -232,8 +232,63 @@
   background: white; border: 1px solid var(--lp-border); border-radius: 24px; padding: 32px;
   position: relative; display: flex; flex-direction: column;
 }
-.lp-plan-card.hot { border-color: var(--lp-primary); box-shadow: var(--lp-shadow-lg); transform: scale(1.02); z-index: 2; }
+.lp-plan-card.hot { border-color: var(--lp-primary); box-shadow: var(--lp-shadow-lg); transform: scale(1.02); z-index: 1; }
 .lp-plan-hot-pill { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); background: var(--lp-primary); color: white; padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+
+/* Free Trial Card Animation & Styles */
+.free-trial-card {
+  border: 2px solid transparent !important;
+  background-clip: padding-box;
+  position: relative;
+  z-index: 2;
+  transform: scale(1.03) !important;
+  box-shadow: 0 16px 48px rgba(16, 185, 129, 0.2) !important;
+  animation: floatTrialCard 6s ease-in-out infinite alternate;
+}
+.free-trial-card::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  background: linear-gradient(135deg, #10b981, #3b82f6, #ec4899, #10b981);
+  background-size: 300% 300%;
+  z-index: -1;
+  border-radius: 26px; /* Matches card 24px + 2px border */
+  animation: trialGradientShift 5s ease infinite;
+}
+
+/* Ensure all text inside the gradient card is white and readable */
+.free-trial-card h3, 
+.free-trial-card p, 
+.free-trial-card .lp-plan-price, 
+.free-trial-card .lp-plan-price span, 
+.free-trial-card .lp-plan-feats li {
+  color: white !important;
+}
+.free-trial-card .lp-plan-icon {
+  background: rgba(255, 255, 255, 0.2);
+}
+.free-trial-card .lp-plan-feats li::before {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.free-trial-card .lp-plan-divider {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.lp-plan-free-pill {
+  position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;
+  padding: 8px 18px; border-radius: 100px; font-size: 13px; font-weight: 800;
+  white-space: nowrap; box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+  letter-spacing: 0.5px; z-index: 3;
+}
+.disabled-trial-btn {
+  background: #E2E8F0 !important; color: #64748B !important; 
+  box-shadow: none !important; border: none !important; cursor: not-allowed !important;
+}
+
+@keyframes trialGradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes floatTrialCard { 0% { transform: translateY(0) scale(1.03); } 100% { transform: translateY(-8px) scale(1.03); } }
+
 .lp-plan-icon { font-size: 32px; margin-bottom: 16px; display: block; }
 .lp-plan-name { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
 .lp-plan-price { font-size: 40px; font-weight: 800; font-family: 'Bricolage Grotesque', sans-serif; color: var(--lp-secondary); margin-bottom: 8px; }

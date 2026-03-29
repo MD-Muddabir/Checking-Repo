@@ -117,13 +117,17 @@ function RegisterPage() {
                     localStorage.setItem("user", JSON.stringify(response.data.user));
                     setUser(response.data.user);
                 }
-                if (selectedPlan && selectedPlan.price > 0) {
+                if (selectedPlan && selectedPlan.price > 0 && !selectedPlan.is_free_trial) {
                     alert("Registration successful! Redirecting to payment...");
                     navigate("/checkout");
                 } else {
                     localStorage.removeItem("token");
                     localStorage.removeItem("user");
-                    alert("Registration successful! Please login to continue.");
+                    if (selectedPlan && selectedPlan.is_free_trial) {
+                        alert("Registration successful! Your free trial is active. Please login to continue.");
+                    } else {
+                        alert("Registration successful! Please login to continue.");
+                    }
                     navigate("/login");
                 }
             }
@@ -259,7 +263,7 @@ function RegisterPage() {
                                     <option value="">-- Select a plan --</option>
                                     {plans.map(plan => (
                                         <option key={plan.id} value={plan.id}>
-                                            {plan.name} — ₹{plan.price}/month
+                                            {plan.name} — {plan.is_free_trial ? '₹0/month (Free Trial)' : `₹${plan.price}/month`}
                                             {plan.max_students ? ` · Up to ${plan.max_students} students` : " · Unlimited"}
                                         </option>
                                     ))}

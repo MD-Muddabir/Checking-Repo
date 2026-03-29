@@ -284,6 +284,11 @@ const syncDatabase = async () => {
     try { await sequelize.query(`ALTER TABLE institute_reviews ADD COLUMN sort_order INT DEFAULT 0;`); } catch (e) { }
     try { await sequelize.query(`ALTER TABLE institute_reviews ADD COLUMN is_approved BOOLEAN DEFAULT true;`); } catch (e) { }
     try { await sequelize.query(`ALTER TABLE institute_gallery_photos ADD COLUMN sort_order INT DEFAULT 0;`); } catch (e) { }
+
+    // Free Trial columns
+    try { await sequelize.query(`ALTER TABLE plans ADD COLUMN is_free_trial BOOLEAN DEFAULT false;`); } catch (e) { }
+    try { await sequelize.query(`ALTER TABLE plans ADD COLUMN trial_days INT DEFAULT 14;`); } catch (e) { }
+    try { await sequelize.query(`ALTER TABLE institutes ADD COLUMN has_used_trial BOOLEAN DEFAULT false;`); } catch (e) { }
     
     // Auto-sync other schema changes using alter for the explicit models to make sure everything matches
     try {
