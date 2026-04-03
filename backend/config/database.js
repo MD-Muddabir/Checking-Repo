@@ -3,28 +3,44 @@
  * Sequelize instance for MySQL connection
  * Uses environment variables for flexibility across environments
  * ✅ Phase 1.1: Optimized Connection Pooling, SSL, Compression, Health Check
+ * ✅ Fixed: Auto-detects SSL, handles Railway public vs internal host
  */
 
 const { Sequelize } = require("sequelize");
 
-// ❌ Don't rely on dotenv in production (Render already injects env)
-if (process.env.NODE_ENV !== "production") {
-    require("dotenv").config();
-}
+// ✅ Always load dotenv so local .env works; Render/Railway override via real env vars
+require("dotenv").config();
 
-// Log which DB we are connecting to (helps debug Railway issues)
-const dbHost = process.env.DB_HOST || "localhost";
-const dbName = process.env.DB_NAME || "student_saas";
-const dbUser = process.env.DB_USER || "root";
-const dbPort = parseInt(process.env.DB_PORT || "3306", 10);
+// ─────────────────────────────────────────────────────────────────────────────
+// Read connection details — support both naming conventions:
+//   Standard:  DB_HOST / DB_PORT / DB_USER / DB_PASSWORD / DB_NAME
+//   Railway:   MYSQLHOST / MYSQLPORT / MYSQLUSER / MYSQLPASSWORD / MYSQLDATABASE
+// ─────────────────────────────────────────────────────────────────────────────
+const dbHost     = process.env.DB_HOST     || process.env.MYSQLHOST     || "localhost";
+const dbName     = process.env.DB_NAME     || process.env.MYSQLDATABASE || "student_saas";
+const dbUser     = process.env.DB_USER     || process.env.MYSQLUSER     || "root";
+const dbPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || "";
+const dbPort     = parseInt(
+    process.env.DB_PORT || process.env.MYSQLPORT || "3306",
+    10
+);
+
+// ✅ Auto-detect SSL: enable only when connecting to a real remote host
+//    (not localhost / 127.0.0.1).  Railway public proxy REQUIRES SSL.
+//    You can force-disable by setting DB_SSL=false in env.
+const isLocalHost = dbHost === "localhost" || dbHost === "127.0.0.1";
+const useSSL = process.env.DB_SSL === "false"
+    ? false
+    : !isLocalHost;   // default: true for any remote host
 
 console.log(`🗄️  Connecting to DB: ${dbUser}@${dbHost}:${dbPort}/${dbName}`);
+console.log(`🔒  SSL: ${useSSL ? "enabled" : "disabled (localhost)"}`);
 
 // Initialize Sequelize with environment variables
 const sequelize = new Sequelize(
     dbName,
     dbUser,
-    process.env.DB_PASSWORD,
+    dbPassword,
     {
         host: dbHost,
         port: dbPort,
@@ -38,36 +54,38 @@ const sequelize = new Sequelize(
                 }
             }
             : false,
-        benchmark: process.env.NODE_ENV === "development", // Track query times in dev
+        benchmark: process.env.NODE_ENV === "development",
 
-        // ✅ Phase 1.1: CRITICAL - Optimized Connection Pooling
+        // ✅ Phase 1.1: Optimized Connection Pooling
         pool: {
-            max: 10,        // Maximum connections (optimized for Railway/Render limits)
-            min: 2,         // Keep 2 always ready - eliminates connection delay
-            acquire: 30000, // Max time to get connection (30s)
-            idle: 10000,    // Close idle connections after 10s
+            max: 10,
+            min: 2,
+            acquire: 30000,
+            idle: 10000,
         },
 
-        // ✅ Phase 1.1: Connection Timeout + SSL + Compression
+        // ✅ SSL is conditional — avoids "SSL not supported" error on localhost
         dialectOptions: {
             connectTimeout: 60000,
-            ssl: {
-                require: true,
-                rejectUnauthorized: false, // ✅ MUST be false
-            }, // Enable MySQL protocol compression
+            ...(useSSL && {
+                ssl: {
+                    require: true,
+                    rejectUnauthorized: false,
+                },
+            }),
         },
 
         define: {
-            timestamps: true,    // Automatically add created_at and updated_at
-            underscored: true,   // Use snake_case to match database columns
-            paranoid: false,     // Disable paranoid (faster deletes)
+            timestamps: true,
+            underscored: true,
+            paranoid: false,
         },
     }
 );
 
-// ✅ Phase 1.1: Connection health check on startup
+// ✅ Connection health check on startup
 sequelize.authenticate()
-    .then(() => console.log("✅ DB Pool Ready (min:2 connections warm)"))
+    .then(() => console.log("✅ DB Pool Ready"))
     .catch(err => console.error("❌ DB Pool Failed:", err.message));
 
 module.exports = sequelize;
