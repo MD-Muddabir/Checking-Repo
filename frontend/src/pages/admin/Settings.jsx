@@ -85,8 +85,8 @@ function Settings() {
                 </div>
                 <div className="dashboard-header-right">
                     <ThemeSelector />
-                    <Link to="/admin/dashboard" className="btn btn-secondary">
-                        ← Back to Dashboard
+                    <Link to="/admin/dashboard" className="animated-btn secondary" style={{ textDecoration: 'none' }}>
+                        <span className="icon icon-back">←</span> Back to Dashboard
                     </Link>
                 </div>
             </div>

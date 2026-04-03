@@ -163,9 +163,11 @@ export default function AdminAssignments() {
                     <h1>📋 Assignments Overview</h1>
                     <p>Monitor all assignments across the institute</p>
                 </div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                     {view !== 'list' && (
-                        <button className="btn btn-secondary" onClick={() => { setView('list'); setSelected(null); }}>← Back</button>
+                        <button className="animated-btn secondary" onClick={() => { setView('list'); setSelected(null); }}>
+                             <span className="icon icon-back">←</span> Back
+                        </button>
                     )}
                     {view === 'list' && (
                         <>
@@ -173,6 +175,9 @@ export default function AdminAssignments() {
                             <button className="btn btn-danger" onClick={loadOverdue}>⛔ Overdue</button>
                             <button className="btn btn-secondary" onClick={handleExport} disabled={exporting}>
                                 {exporting ? 'Exporting...' : '📊 Export CSV'}
+                            </button>
+                            <button className="animated-btn secondary" onClick={() => window.location.href = "/admin/dashboard"}>
+                                <span className="icon icon-back">←</span> Back to Dashboard
                             </button>
                         </>
                     )}

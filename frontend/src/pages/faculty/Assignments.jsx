@@ -236,10 +236,10 @@ export default function FacultyAssignments() {
                     <h1>📝 Assignments</h1>
                     <p>Create, manage, and grade student assignments</p>
                 </div>
-                <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
                     {view !== 'list' && (
-                        <button className="btn btn-secondary" onClick={() => { setView('list'); setSelected(null); fetchAll(); }}>
-                            ← Back
+                        <button className="animated-btn secondary" onClick={() => { setView('list'); setSelected(null); fetchAll(); }}>
+                            <span className="icon icon-back">←</span> Back
                         </button>
                     )}
                     {view === 'list' && (
@@ -247,6 +247,9 @@ export default function FacultyAssignments() {
                             + Create Assignment
                         </button>
                     )}
+                    <button className="animated-btn secondary" onClick={() => window.location.href = "/faculty/dashboard"}>
+                        <span className="icon icon-back">←</span> Back to Dashboard
+                    </button>
                 </div>
             </div>
 

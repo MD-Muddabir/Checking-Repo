@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import BackButton from '../../components/common/BackButton';
 import '../faculty/Assignments.css';
 import './Dashboard.css';
 
@@ -82,11 +83,12 @@ export default function ParentAssignments() {
         <div className="dashboard-container">
             {msg && <div className={`fa-flash ${msg.type}`}>{msg.type === 'success' ? '✅' : '❌'} {msg.text}</div>}
 
-            <div className="dashboard-header">
+            <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1>📝 Child's Assignments</h1>
                     <p>Monitor your child's assignment progress and grades</p>
                 </div>
+                <BackButton to="/parent/dashboard" />
             </div>
 
             {/* Student Selector */}

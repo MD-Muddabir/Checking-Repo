@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
+import BackButton from "../../components/common/BackButton";
 import "../admin/Dashboard.css";
 
 function ViewMarks() {
@@ -38,16 +39,12 @@ function ViewMarks() {
 
     return (
         <div className="dashboard-container">
-            <div className="dashboard-header">
+            <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1>📝 My Exam Marks</h1>
                     <p>View your performance across all exams</p>
                 </div>
-                <div>
-                    <Link to="/student/dashboard" className="btn btn-secondary btn-sm mobile-back-btn">
-                        ← Back
-                    </Link>
-                </div>
+                <BackButton to="/student/dashboard" />
             </div>
 
             <div className="card mobile-slide-in">

@@ -144,7 +144,7 @@ function AdminTimetable() {
                     <h1>📅 Weekly Timetable</h1>
                     <p>Class schedule management</p>
                 </div>
-                <div className="dashboard-header-right" style={{ display: 'flex', gap: '10px' }}>
+                <div className="dashboard-header-right" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <button className="animated-btn secondary" onClick={() => setShowSlotModal(true)}>
                         <span className="icon">⏱️</span> Manage Time Slots
                     </button>
@@ -156,6 +156,9 @@ function AdminTimetable() {
                         setShowEntryModal(true);
                     }}>
                         <span className="icon">➕</span> Assign Subject
+                    </button>
+                    <button className="animated-btn secondary" onClick={() => window.location.href = "/admin/dashboard"}>
+                        <span className="icon icon-back">←</span> Back to Dashboard
                     </button>
                 </div>
             </div>

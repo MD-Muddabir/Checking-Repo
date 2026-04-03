@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import api from "../../services/api";
+import BackButton from "../../components/common/BackButton";
 import "../admin/Dashboard.css";
 
 /**
@@ -99,16 +100,12 @@ function ViewAttendance() {
 
     return (
         <div className="dashboard-container">
-            <div className="dashboard-header">
+            <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1>📋 My Attendance</h1>
                     <p>Track your daily attendance — working days exclude holidays</p>
                 </div>
-                <div style={{ display: "flex", gap: "10px" }}>
-                    <Link to="/student/dashboard" className="btn btn-secondary btn-sm mobile-back-btn">
-                        ← Back
-                    </Link>
-                </div>
+                <BackButton to="/student/dashboard" />
             </div>
 
             {/* Phase 2: Subject Filter Chips (mobile-friendly horizontal scroll) */}

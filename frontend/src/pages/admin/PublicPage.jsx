@@ -154,9 +154,14 @@ export default function PublicPage() {
   return (
     <div className="pub-page-container">
       {/* Header */}
-      <div style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ margin: 0 }}>🌐 Public Web Page</h1>
-        <p style={{ color: "var(--text-secondary)", margin: 0 }}>Manage your institute's public-facing website</p>
+      <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h1 style={{ margin: 0 }}>🌐 Public Web Page</h1>
+          <p style={{ color: "var(--text-secondary)", margin: 0 }}>Manage your institute's public-facing website</p>
+        </div>
+        <button className="btn btn-secondary" onClick={() => navigate("/admin/dashboard")}>
+          ← Back to Dashboard
+        </button>
       </div>
 
       {/* Status Banner */}

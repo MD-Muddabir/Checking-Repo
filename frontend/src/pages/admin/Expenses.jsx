@@ -299,7 +299,7 @@ const AdminExpenses = forwardRef((props, ref) => {
                             </button>
                         )}
                         <ThemeSelector />
-                        <Link to="/admin/dashboard" className="btn btn-secondary">â† Back</Link>
+                        <Link to="/admin/dashboard" className="btn btn-secondary">← Back</Link>
                     </div>
                 </div>
             )}

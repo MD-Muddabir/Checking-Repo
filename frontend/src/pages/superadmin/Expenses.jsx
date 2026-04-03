@@ -142,10 +142,13 @@ function SuperAdminExpenses() {
                     <h1>💸 Super Admin Finances (Transport)</h1>
                     <p>Track monthly expenses, income, burn rate and profit/loss</p>
                 </div>
-                <div className="dashboard-header-right">
+                <div className="dashboard-header-right" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <ThemeSelector />
                     <button className="animated-btn primary" onClick={() => setShowAddModal(true)}>
                         <span className="icon">➕</span> Add Expense
+                    </button>
+                    <button className="animated-btn secondary" onClick={() => window.location.href = "/superadmin/dashboard"}>
+                        <span className="icon icon-back">←</span> Back to Dashboard
                     </button>
                 </div>
             </div>

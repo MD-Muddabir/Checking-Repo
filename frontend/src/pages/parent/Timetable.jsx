@@ -89,9 +89,12 @@ function ParentTimetable() {
                     <h1>📅 Master Timetable</h1>
                     <p>View the weekly class schedule for your children.</p>
                 </div>
-                <div className="dashboard-header-right">
+                <div className="dashboard-header-right" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <ThemeSelector />
                     <button onClick={logout} className="btn-logout">Logout</button>
+                    <button className="btn btn-secondary" onClick={() => window.location.href = "/parent/dashboard"}>
+                        ← Back to Dashboard
+                    </button>
                 </div>
             </header>
 

@@ -127,8 +127,8 @@ function StudentNotes() {
                             ))}
                         </select>
                     )}
-                    <button className="btn btn-secondary" onClick={() => window.history.back()}>
-                        ⬅ Back
+                    <button className="btn btn-secondary" onClick={() => window.location.href = "/student/dashboard"}>
+                        ← Back to Dashboard
                     </button>
                 </div>
             </div>

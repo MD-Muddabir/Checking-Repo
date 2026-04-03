@@ -5,6 +5,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import BackButton from '../../components/common/BackButton';
 import '../faculty/Assignments.css';
 import '../admin/Dashboard.css';
 
@@ -147,14 +148,19 @@ export default function StudentAssignments() {
         <div className="dashboard-container">
             {msg && <div className={`fa-flash ${msg.type}`}>{msg.type === 'success' ? '✅' : '❌'} {msg.text}</div>}
 
-            <div className="dashboard-header">
+            <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1>📝 My Assignments</h1>
                     <p>View, submit, and track your assignment submissions</p>
                 </div>
-                {detailAsg && (
-                    <button className="btn btn-secondary" onClick={() => setDetailAsg(null)}>← Back to List</button>
-                )}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    {detailAsg && (
+                        <button className="animated-btn secondary" onClick={() => setDetailAsg(null)}>
+                            <span className="icon">←</span> Back to List
+                        </button>
+                    )}
+                    <BackButton to="/student/dashboard" />
+                </div>
             </div>
 
             {/* ── STATISTICS ROW ── */}

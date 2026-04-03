@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
+import BackButton from "../../components/common/BackButton";
 import "../admin/Dashboard.css";
 import jsPDF from "jspdf";
 import { useRazorpayPayment } from "../../hooks/useRazorpayPayment";
@@ -163,16 +164,12 @@ function PayFees() {
 
     return (
         <div className="dashboard-container">
-            <div className="dashboard-header">
+            <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1>💳 Pay Fees</h1>
                     <p>View your fee structures and make online payments</p>
                 </div>
-                <div style={{ display: "flex", gap: "10px" }}>
-                    <Link to="/student/dashboard" className="btn btn-secondary">
-                        ← Back
-                    </Link>
-                </div>
+                <BackButton to="/student/dashboard" />
             </div>
 
             {error && <div style={{ color: "red", padding: "10px", marginBottom: "1rem", backgroundColor: "#ffebeb", borderRadius: "5px" }}>{error}</div>}

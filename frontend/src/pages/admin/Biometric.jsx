@@ -25,13 +25,21 @@ export default function BiometricPage() {
     return (
         <div style={{ padding: "1.5rem", maxWidth: "1200px", margin: "0 auto" }}>
             {/* Header */}
-            <div style={{ marginBottom: "1.5rem" }}>
-                <h1 style={{ fontSize: "1.8rem", fontWeight: 800, margin: 0 }}>
-                    🔐 Biometric Attendance
-                </h1>
-                <p style={{ color: "var(--text-secondary)", margin: "0.25rem 0 0" }}>
-                    Manage devices, enrollments, and view live attendance data
-                </p>
+            <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                <div>
+                    <h1 style={{ fontSize: "1.8rem", fontWeight: 800, margin: 0 }}>
+                        🔐 Biometric Attendance
+                    </h1>
+                    <p style={{ color: "var(--text-secondary)", margin: "0.25rem 0 0" }}>
+                        Manage devices, enrollments, and view live attendance data
+                    </p>
+                </div>
+                <button
+                    className="animated-btn secondary"
+                    onClick={() => window.location.href = "/admin/dashboard"}
+                >
+                    <span className="icon icon-back">←</span> Back to Dashboard
+                </button>
             </div>
 
             {/* Tabs */}

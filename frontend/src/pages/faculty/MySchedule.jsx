@@ -60,11 +60,14 @@ function FacultySchedule() {
 
     return (
         <div className="dashboard-container">
-            <div className="dashboard-header">
+            <div className="dashboard-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
                 <div>
                     <h1>📅 My Teaching Schedule</h1>
                     <p>View the full timetable for classes you teach. Your subjects are highlighted.</p>
                 </div>
+                <button className="animated-btn secondary" onClick={() => window.location.href = "/faculty/dashboard"}>
+                    <span className="icon icon-back">←</span> Back to Dashboard
+                </button>
             </div>
 
             {classTimetables.length === 0 ? (

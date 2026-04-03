@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
+import BackButton from "../../components/common/BackButton";
 import "../admin/Dashboard.css"; // Reuse dashboard UI
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -65,11 +66,12 @@ function StudentTimetable() {
 
     return (
         <div className="dashboard-container">
-            <div className="dashboard-header">
+            <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1>📅 My Class Timetable</h1>
                     <p>View your weekly class schedule and subjects.</p>
                 </div>
+                <BackButton to="/student/dashboard" />
             </div>
 
             {classes.length > 1 && (

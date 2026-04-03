@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import api from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
+import BackButton from "../../components/common/BackButton";
 import "../admin/Dashboard.css";
 
 function ScanAttendance() {
@@ -43,14 +44,12 @@ function ScanAttendance() {
 
     return (
         <div className="dashboard-container">
-            <div className="dashboard-header">
+            <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h1>🤳 My Attendance QR Code</h1>
                     <p>Show this static QR code to your faculty to mark attendance.</p>
                 </div>
-                <Link to="/student/dashboard" className="btn btn-secondary">
-                    ← Back
-                </Link>
+                <BackButton to="/student/dashboard" />
             </div>
 
             <div className="card" style={{ padding: "3rem", maxWidth: "540px", margin: "0 auto", textAlign: "center" }}>

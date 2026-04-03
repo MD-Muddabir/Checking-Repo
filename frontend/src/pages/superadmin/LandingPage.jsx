@@ -53,13 +53,18 @@ export default function LandingPage() {
   return (
     <div className="pub-page-container">
       {/* Header */}
-      <div style={{ marginBottom: "1.5rem" }}>
-        <h1 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span>🌐</span> Student SaaS Landing Page
-        </h1>
-        <p style={{ color: "var(--text-secondary)", margin: 0 }}>
-          Manage your global public-facing marketing page
-        </p>
+      <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h1 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span>🌐</span> Student SaaS Landing Page
+          </h1>
+          <p style={{ color: "var(--text-secondary)", margin: 0 }}>
+            Manage your global public-facing marketing page
+          </p>
+        </div>
+        <button className="animated-btn secondary" onClick={() => navigate("/superadmin/dashboard")}>
+          <span className="icon icon-back">←</span> Back to Dashboard
+        </button>
       </div>
 
       {/* Status Banner */}
