@@ -55,6 +55,14 @@ const EMPTY_MANUAL_COURSE = {
   badge: "",
 };
 
+const EMPTY_MANUAL_FACULTY = {
+  id: null,
+  name: "",
+  email: "",
+  designation: "",
+  image_url: null,
+};
+
 export default function PublicPageWizard({ onDone, existingData }) {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -76,6 +84,7 @@ export default function PublicPageWizard({ onDone, existingData }) {
     theme_color: "0F2340",
     // Phase 1: Courses
     course_mode: "auto",
+    faculty_mode: "auto",
     // Phase 4: YouTube
     youtube_intro_url: "",
   });
@@ -93,6 +102,9 @@ export default function PublicPageWizard({ onDone, existingData }) {
   // Phase 1: Manual courses state
   const [manualCourses, setManualCourses] = useState([{ ...EMPTY_MANUAL_COURSE, id: Date.now() }]);
   const [courseImageFiles, setCourseImageFiles] = useState({}); // idx -> File
+
+  const [manualFaculty, setManualFaculty] = useState([{ ...EMPTY_MANUAL_FACULTY, id: Date.now() }]);
+  const [facultyImageFiles, setFacultyImageFiles] = useState({}); // idx -> File
 
   // Phase 2: Faculty image uploads
   const [facultyImageUploading, setFacultyImageUploading] = useState({}); // id -> bool
@@ -133,6 +145,7 @@ export default function PublicPageWizard({ onDone, existingData }) {
         logo_url: existingData.logo_url || "",
         cover_photo_url: existingData.cover_photo_url || "",
         course_mode: existingData.course_mode || "auto",
+        faculty_mode: existingData.faculty_mode || "auto",
         youtube_intro_url: existingData.youtube_intro_url || "",
       }));
       if (existingData.logo_url) setLogoPreview(existingData.logo_url);
@@ -142,6 +155,9 @@ export default function PublicPageWizard({ onDone, existingData }) {
       // Pre-fill manual courses
       if (existingData.manual_courses?.length) {
         setManualCourses(existingData.manual_courses.map(c => ({ ...EMPTY_MANUAL_COURSE, ...c, id: c.id || Date.now() + Math.random() })));
+      }
+      if (existingData.manual_faculty?.length) {
+        setManualFaculty(existingData.manual_faculty.map(f => ({ ...EMPTY_MANUAL_FACULTY, ...f, id: f.id || Date.now() + Math.random() })));
       }
     }
   }, [existingData]);
@@ -182,6 +198,23 @@ export default function PublicPageWizard({ onDone, existingData }) {
     setCourseImageFiles(prev => { const n = { ...prev }; delete n[idx]; return n; });
   };
 
+  // ── Manual faculty helpers ───────────────────────────────────────
+  const updateManualFaculty = (idx, key, val) => {
+    setManualFaculty(prev => {
+      const arr = [...prev];
+      arr[idx] = { ...arr[idx], [key]: val };
+      return arr;
+    });
+  };
+  const addManualFaculty = () => {
+    if (manualFaculty.length >= 20) return;
+    setManualFaculty(prev => [...prev, { ...EMPTY_MANUAL_FACULTY, id: Date.now() }]);
+  };
+  const removeManualFaculty = (idx) => {
+    setManualFaculty(prev => prev.filter((_, i) => i !== idx));
+    setFacultyImageFiles(prev => { const n = { ...prev }; delete n[idx]; return n; });
+  };
+
   // ── Save current step data to backend ──────────────────────────
   const saveStep = useCallback(async (publish = false) => {
     setSaving(true);
@@ -198,10 +231,15 @@ export default function PublicPageWizard({ onDone, existingData }) {
       // Append manual courses (with stock image idx info; actual files below)
       const coursesPayload = manualCourses.map((c, idx) => ({
         ...c,
-        // If there's a new file for this index, don't store image_url (backend will update it)
         image_url: courseImageFiles[idx] ? null : c.image_url,
       }));
       fd.append("manual_courses", JSON.stringify(coursesPayload));
+
+      const facultyPayload = manualFaculty.map((f, idx) => ({
+        ...f,
+        image_url: facultyImageFiles[idx] ? null : f.image_url,
+      }));
+      fd.append("manual_faculty", JSON.stringify(facultyPayload));
 
       if (logoFile) fd.append("logo", logoFile);
       if (coverFile) fd.append("cover_photo", coverFile);
@@ -209,6 +247,9 @@ export default function PublicPageWizard({ onDone, existingData }) {
       // Append course image files
       Object.entries(courseImageFiles).forEach(([idx, file]) => {
         fd.append(`manual_course_img_${idx}`, file);
+      });
+      Object.entries(facultyImageFiles).forEach(([idx, file]) => {
+        fd.append(`manual_faculty_img_${idx}`, file);
       });
 
       await api.post("/admin/public-page", fd, { headers: { "Content-Type": "multipart/form-data" } });
@@ -224,7 +265,7 @@ export default function PublicPageWizard({ onDone, existingData }) {
     } finally {
       setSaving(false);
     }
-  }, [form, logoFile, coverFile, onDone, manualCourses, courseImageFiles]);
+  }, [form, logoFile, coverFile, onDone, manualCourses, courseImageFiles, manualFaculty, facultyImageFiles]);
 
   const handleNext = async () => {
     await saveStep();
@@ -625,91 +666,208 @@ export default function PublicPageWizard({ onDone, existingData }) {
   const renderStep4 = () => (
     <div>
       <h3 style={{ marginTop: 0 }}>👩‍🏫 Select Faculty to Show</h3>
-      {faculty.length === 0
-        ? <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", background: "var(--border-color)", borderRadius: "12px" }}>
-            ⚠️ No faculty found. Please add faculty from the <strong>Faculty</strong> section first.
-          </div>
-        : <div style={{ display: "flex", flexDirection: "column", gap: ".75rem" }}>
-            {faculty.map(f => (
-              <div
-                key={f.id}
-                className={`faculty-wizard-card ${form.selected_faculty_ids.includes(f.id) ? "selected" : ""}`}
-                style={{
-                  border: "1px solid",
-                  borderColor: form.selected_faculty_ids.includes(f.id) ? "var(--primary,#6366f1)" : "var(--border-color)",
-                  borderRadius: "14px", padding: "1rem 1.25rem",
-                  background: form.selected_faculty_ids.includes(f.id) ? "rgba(99,102,241,.06)" : "var(--card-bg,#fff)",
-                  transition: "all .2s"
-                }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-                  {/* Checkbox */}
-                  <input
-                    type="checkbox"
-                    checked={form.selected_faculty_ids.includes(f.id)}
-                    onChange={() => toggleId("selected_faculty_ids", f.id)}
-                    style={{ width: 18, height: 18, accentColor: "var(--primary,#6366f1)", flexShrink: 0 }}
-                  />
 
-                  {/* Faculty Avatar / Photo */}
-                  <div style={{ position: "relative", flexShrink: 0 }}>
-                    <div style={{
-                      width: 56, height: 56, borderRadius: "50%", overflow: "hidden",
-                      background: f.image_url ? "transparent" : "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#fff", fontWeight: 700, fontSize: "1.2rem", flexShrink: 0
+      {/* Auto / Manual Toggle */}
+      <div className="course-mode-toggle" style={{ marginBottom: "1.5rem" }}>
+        <div className="form-hint" style={{ marginBottom: ".75rem", fontSize: ".85rem", color: "var(--text-secondary)" }}>
+          Choose how to display faculty on your public page:
+        </div>
+        <div style={{ display: "flex", gap: ".75rem" }}>
+          <button
+            type="button"
+            className={`mode-btn ${form.faculty_mode === "auto" ? "mode-btn-active" : ""}`}
+            onClick={() => set("faculty_mode", "auto")}
+            style={{
+              flex: 1, padding: ".85rem 1rem", borderRadius: "12px", border: "2px solid",
+              borderColor: form.faculty_mode === "auto" ? "var(--primary,#6366f1)" : "var(--border-color)",
+              background: form.faculty_mode === "auto" ? "rgba(99,102,241,.1)" : "transparent",
+              cursor: "pointer", transition: "all .2s", textAlign: "left"
+            }}>
+            <div style={{ fontWeight: 700, fontSize: ".95rem", color: form.faculty_mode === "auto" ? "var(--primary,#6366f1)" : "var(--text-primary)" }}>
+              🔄 Auto (Recommended)
+            </div>
+            <div style={{ fontSize: ".8rem", color: "var(--text-secondary)", marginTop: ".25rem" }}>
+              Automatically displays faculty from your database
+            </div>
+          </button>
+          <button
+            type="button"
+            className={`mode-btn ${form.faculty_mode === "manual" ? "mode-btn-active" : ""}`}
+            onClick={() => set("faculty_mode", "manual")}
+            style={{
+              flex: 1, padding: ".85rem 1rem", borderRadius: "12px", border: "2px solid",
+              borderColor: form.faculty_mode === "manual" ? "var(--primary,#6366f1)" : "var(--border-color)",
+              background: form.faculty_mode === "manual" ? "rgba(99,102,241,.1)" : "transparent",
+              cursor: "pointer", transition: "all .2s", textAlign: "left"
+            }}>
+            <div style={{ fontWeight: 700, fontSize: ".95rem", color: form.faculty_mode === "manual" ? "var(--primary,#6366f1)" : "var(--text-primary)" }}>
+              ✏️ Manual (Custom)
+            </div>
+            <div style={{ fontSize: ".8rem", color: "var(--text-secondary)", marginTop: ".25rem" }}>
+              Add custom faculty cards with images, designations & details
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {form.faculty_mode === "auto" && (
+        <>
+          {faculty.length === 0
+            ? <div style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)", background: "var(--border-color)", borderRadius: "12px" }}>
+                ⚠️ No faculty found. Please add faculty from the <strong>Faculty</strong> section first.
+              </div>
+            : <div style={{ display: "flex", flexDirection: "column", gap: ".75rem" }}>
+                {faculty.map(f => (
+                  <div
+                    key={f.id}
+                    className={`faculty-wizard-card ${form.selected_faculty_ids.includes(f.id) ? "selected" : ""}`}
+                    style={{
+                      border: "1px solid",
+                      borderColor: form.selected_faculty_ids.includes(f.id) ? "var(--primary,#6366f1)" : "var(--border-color)",
+                      borderRadius: "14px", padding: "1rem 1.25rem",
+                      background: form.selected_faculty_ids.includes(f.id) ? "rgba(99,102,241,.06)" : "var(--card-bg,#fff)",
+                      transition: "all .2s"
                     }}>
-                      {f.image_url
-                        ? <img src={resolveImg(f.image_url)} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        : (f.name || "F")[0].toUpperCase()
-                      }
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                      <input
+                        type="checkbox"
+                        checked={form.selected_faculty_ids.includes(f.id)}
+                        onChange={() => toggleId("selected_faculty_ids", f.id)}
+                        style={{ width: 18, height: 18, accentColor: "var(--primary,#6366f1)", flexShrink: 0 }}
+                      />
+                      <div style={{ position: "relative", flexShrink: 0 }}>
+                        <div style={{
+                          width: 56, height: 56, borderRadius: "50%", overflow: "hidden",
+                          background: f.image_url ? "transparent" : "linear-gradient(135deg,#6366f1,#8b5cf6)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          color: "#fff", fontWeight: 700, fontSize: "1.2rem", flexShrink: 0
+                        }}>
+                          {f.image_url
+                            ? <img src={resolveImg(f.image_url)} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            : (f.name || "F")[0].toUpperCase()
+                          }
+                        </div>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: ".95rem" }}>{f.name}</div>
+                        <div style={{ fontSize: ".8rem", color: "var(--text-secondary)" }}>{f.email}</div>
+                        {f.designation && <div style={{ fontSize: ".78rem", color: "var(--text-secondary)" }}>{f.designation}</div>}
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: ".4rem", flexShrink: 0 }}>
+                        <label
+                          className="btn btn-sm btn-secondary"
+                          style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: ".35rem" }}
+                          title="Upload faculty photo">
+                          {facultyImageUploading[f.id] ? "Uploading..." : f.image_url ? "📸 Change Photo" : "📸 Upload Photo"}
+                          <input
+                            type="file"
+                            accept=".jpg,.jpeg,.png,.webp"
+                            style={{ display: "none" }}
+                            disabled={facultyImageUploading[f.id]}
+                            onChange={e => {
+                              const file = e.target.files[0];
+                              if (file) handleFacultyImageUpload(f.id, file);
+                            }}
+                          />
+                        </label>
+                        {f.image_url && (
+                          <button
+                            className="btn btn-sm btn-danger"
+                            style={{ fontSize: ".75rem" }}
+                            onClick={() => handleFacultyImageDelete(f.id)}>
+                            🗑 Remove
+                          </button>
+                        )}
+                        {facultyImageMsg[f.id] && (
+                          <div style={{ fontSize: ".75rem", color: facultyImageMsg[f.id].startsWith("✅") ? "#10b981" : "#ef4444" }}>
+                            {facultyImageMsg[f.id]}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+          }
+          <p className="form-hint" style={{ marginTop: "1rem" }}>Selected: {form.selected_faculty_ids.length} of {faculty.length}. Leave all unchecked to show all.</p>
+        </>
+      )}
 
-                  {/* Faculty Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: ".95rem" }}>{f.name}</div>
-                    <div style={{ fontSize: ".8rem", color: "var(--text-secondary)" }}>{f.email}</div>
-                    {f.designation && <div style={{ fontSize: ".78rem", color: "var(--text-secondary)" }}>{f.designation}</div>}
-                  </div>
+      {form.faculty_mode === "manual" && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+            <div className="form-hint">Add custom faculty members. Choose an image for each.</div>
+            {manualFaculty.length < 20 && (
+              <button className="btn btn-sm btn-primary" onClick={addManualFaculty}>+ Add Faculty</button>
+            )}
+          </div>
 
-                  {/* Image Upload */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: ".4rem", flexShrink: 0 }}>
-                    <label
-                      className="btn btn-sm btn-secondary"
-                      style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: ".35rem" }}
-                      title="Upload faculty photo">
-                      {facultyImageUploading[f.id] ? "Uploading..." : f.image_url ? "📸 Change Photo" : "📸 Upload Photo"}
-                      <input
-                        type="file"
-                        accept=".jpg,.jpeg,.png,.webp"
-                        style={{ display: "none" }}
-                        disabled={facultyImageUploading[f.id]}
-                        onChange={e => {
-                          const file = e.target.files[0];
-                          if (file) handleFacultyImageUpload(f.id, file);
-                        }}
+          {manualFaculty.map((fac, idx) => (
+            <div key={fac.id} className="manual-course-card" style={{
+              border: "1px solid var(--border-color)", borderRadius: "14px", padding: "1.25rem",
+              marginBottom: "1rem", background: "var(--card-bg,#fff)", position: "relative"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                <div style={{ fontWeight: 700, fontSize: ".9rem", color: "var(--text-secondary)" }}>Faculty #{idx + 1}</div>
+                {manualFaculty.length > 1 && (
+                  <button className="btn-icon-remove" onClick={() => removeManualFaculty(idx)} style={{ position: "static" }}>✕</button>
+                )}
+              </div>
+
+              <div className="form-grid-2">
+                <div className="form-row">
+                  <label>Faculty Image</label>
+                  <label className="upload-area" style={{ display: "flex", alignItems: "center", gap: ".75rem", padding: ".75rem 1rem", cursor: "pointer" }}>
+                    {(facultyImageFiles[idx] || fac.image_url) ? (
+                      <img
+                        src={facultyImageFiles[idx] ? URL.createObjectURL(facultyImageFiles[idx]) : resolveImg(fac.image_url)}
+                        alt="faculty"
+                        style={{ width: 50, height: 50, borderRadius: "50%", objectFit: "cover" }}
                       />
-                    </label>
-                    {f.image_url && (
-                      <button
-                        className="btn btn-sm btn-danger"
-                        style={{ fontSize: ".75rem" }}
-                        onClick={() => handleFacultyImageDelete(f.id)}>
-                        🗑 Remove
-                      </button>
-                    )}
-                    {facultyImageMsg[f.id] && (
-                      <div style={{ fontSize: ".75rem", color: facultyImageMsg[f.id].startsWith("✅") ? "#10b981" : "#ef4444" }}>
-                        {facultyImageMsg[f.id]}
+                    ) : (
+                      <div style={{ width: 50, height: 50, borderRadius: "50%", background: "var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem" }}>
+                        👤
                       </div>
                     )}
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: ".85rem" }}>Upload Photo</div>
+                      <div className="form-hint">JPG/PNG · Max 5MB</div>
+                    </div>
+                    <input type="file" accept=".jpg,.jpeg,.png,.webp" style={{ display: "none" }}
+                      onChange={e => {
+                        const f = e.target.files[0];
+                        if (!f) return;
+                        setFacultyImageFiles(prev => ({ ...prev, [idx]: f }));
+                        updateManualFaculty(idx, "image_url", null);
+                      }} />
+                  </label>
+                </div>
+
+                <div>
+                  <div className="form-row">
+                    <label>Faculty Name *</label>
+                    <input placeholder="e.g. John Doe" value={fac.name} onChange={e => updateManualFaculty(idx, "name", e.target.value)} />
+                  </div>
+                  <div className="form-row">
+                    <label>Designation</label>
+                    <input placeholder="e.g. Senior Mathematics Faculty" value={fac.designation} onChange={e => updateManualFaculty(idx, "designation", e.target.value)} />
+                  </div>
+                  <div className="form-row">
+                    <label>Email / Qualification (Optional)</label>
+                    <input placeholder="e.g. M.Sc. Mathematics" value={fac.email} onChange={e => updateManualFaculty(idx, "email", e.target.value)} />
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-      }
-      <p className="form-hint" style={{ marginTop: "1rem" }}>Selected: {form.selected_faculty_ids.length} of {faculty.length}. Leave all unchecked to show all.</p>
+            </div>
+          ))}
+
+          {manualFaculty.length < 20 && (
+            <button className="btn btn-secondary" style={{ width: "100%", padding: ".85rem" }} onClick={addManualFaculty}>
+              + Add Another Faculty ({manualFaculty.length}/20)
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Student Reviews */}
       <div className="form-row" style={{ marginTop: "1.5rem" }}>

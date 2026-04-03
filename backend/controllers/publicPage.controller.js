@@ -84,6 +84,7 @@ exports.getPublicPage = async (req, res) => {
         profileJson.selected_faculty_ids = parseJson(profileJson.selected_faculty_ids, []);
         profileJson.selected_subject_ids = parseJson(profileJson.selected_subject_ids, []);
         profileJson.manual_courses = parseJson(profileJson.manual_courses, []);
+        profileJson.manual_faculty = parseJson(profileJson.manual_faculty, []);
         profileJson.faculty_images = parseJson(profileJson.faculty_images, {});
 
         return res.json({
@@ -131,15 +132,28 @@ exports.createOrUpdatePublicPage = async (req, res) => {
             manualCourses = parseJson(req.body.manual_courses, []);
         }
 
+        let manualFaculty = existing?.manual_faculty || [];
+        if (req.body.manual_faculty !== undefined) {
+            manualFaculty = parseJson(req.body.manual_faculty, []);
+        }
+
         // Handle manual course image uploads (field names: manual_course_img_0, manual_course_img_1, ...)
         if (req.files) {
             Object.keys(req.files).forEach(fieldName => {
-                const match = fieldName.match(/^manual_course_img_(\d+)$/);
-                if (match) {
-                    const idx = parseInt(match[1]);
+                const matchCourse = fieldName.match(/^manual_course_img_(\d+)$/);
+                if (matchCourse) {
+                    const idx = parseInt(matchCourse[1]);
                     const file = req.files[fieldName][0];
                     if (file && manualCourses[idx]) {
                         manualCourses[idx].image_url = `/uploads/public/${file.filename}`;
+                    }
+                }
+                const matchFaculty = fieldName.match(/^manual_faculty_img_(\d+)$/);
+                if (matchFaculty) {
+                    const idx = parseInt(matchFaculty[1]);
+                    const file = req.files[fieldName][0];
+                    if (file && manualFaculty[idx]) {
+                        manualFaculty[idx].image_url = `/uploads/public/${file.filename}`;
                     }
                 }
             });
@@ -198,6 +212,8 @@ exports.createOrUpdatePublicPage = async (req, res) => {
             // New Phase fields
             course_mode: req.body.course_mode || existing?.course_mode || 'auto',
             manual_courses: manualCourses,
+            faculty_mode: req.body.faculty_mode || existing?.faculty_mode || 'auto',
+            manual_faculty: manualFaculty,
             youtube_intro_url: req.body.youtube_intro_url !== undefined ? req.body.youtube_intro_url : existing?.youtube_intro_url,
             faculty_images: facultyImages,
         };

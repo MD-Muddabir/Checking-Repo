@@ -128,6 +128,9 @@ exports.getPublicPageData = async (req, res) => {
         const courseMode = profile.course_mode || 'auto';
         const manualCourses = parseJson(profile.manual_courses, []);
 
+        const facultyMode = profile.faculty_mode || 'auto';
+        const manualFaculty = parseJson(profile.manual_faculty, []);
+
         const visibleFaculty = selectedFacultyIds.length > 0
             ? facultyList.filter(f => selectedFacultyIds.includes(f.id))
             : facultyList;
@@ -135,6 +138,27 @@ exports.getPublicPageData = async (req, res) => {
         const visibleSubjects = selectedSubjectIds.length > 0
             ? subjectList.filter(s => selectedSubjectIds.includes(s.id))
             : subjectList;
+
+        let facultyToShow;
+        if (facultyMode === 'manual' && manualFaculty && manualFaculty.length > 0) {
+            facultyToShow = manualFaculty.filter(f => f.name).map(f => ({
+                id: f.id,
+                name: f.name,
+                email: f.email,
+                designation: f.designation,
+                subject: null,
+                image_url: f.image_url
+            }));
+        } else {
+            facultyToShow = visibleFaculty.map(f => ({
+                id: f.id,
+                name: f.User?.name || 'Faculty',
+                email: f.User?.email,
+                designation: f.designation || null,
+                subject: subjectList.filter(s => s.faculty_id === f.user_id).map(s => s.name).join(', '),
+                image_url: facultyImages[String(f.id)] || null
+            }));
+        }
 
         // Determine courses to show
         let coursesToShow;
@@ -203,14 +227,8 @@ exports.getPublicPageData = async (req, res) => {
                 rating: r.rating,
                 achievement: r.achievement
             })),
-            faculty: visibleFaculty.map(f => ({
-                id: f.id,
-                name: f.User?.name || 'Faculty',
-                email: f.User?.email,
-                designation: f.designation || null,
-                subject: subjectList.filter(s => s.faculty_id === f.user_id).map(s => s.name).join(', '),
-                image_url: facultyImages[String(f.id)] || null
-            })),
+            faculty: facultyToShow,
+            faculty_mode: facultyMode,
             courses: coursesToShow,
             course_mode: courseMode,
             youtube_embed_url: youtubeEmbedUrl,

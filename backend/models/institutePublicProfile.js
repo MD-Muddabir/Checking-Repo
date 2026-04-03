@@ -160,6 +160,16 @@ const InstitutePublicProfile = sequelize.define("InstitutePublicProfile", {
         allowNull: true,
         defaultValue: null
     },
+    faculty_mode: {
+        type: DataTypes.STRING(10),
+        allowNull: false,
+        defaultValue: 'auto'
+    },
+    manual_faculty: {
+        type: DataTypes.JSON,
+        allowNull: true,
+        defaultValue: null
+    },
     // YouTube intro video URL (will be converted to embed URL)
     youtube_intro_url: {
         type: DataTypes.STRING(500),
