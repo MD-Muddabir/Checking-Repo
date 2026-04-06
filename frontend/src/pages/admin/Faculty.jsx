@@ -272,15 +272,19 @@ function Faculty() {
                                         </td>
                                         <td>
                                             {facultyMember.Subjects && facultyMember.Subjects.length > 0 ? (
-                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', maxWidth: '260px' }}>
                                                     {facultyMember.Subjects.map((sub) => (
-                                                        <span key={sub.id} style={{ color: "#e2e8f0", fontSize: '0.75rem', padding: '4px 4px', fontWeight: '500' }}>
-                                                            {sub.Class?.name}{sub.Class?.section ? ` (${sub.Class.section})` : ''} : {sub.name}
+                                                        <span key={sub.id} className="teaching-detail-pill">
+                                                            <span className="teaching-detail-class">
+                                                                {sub.Class?.name}{sub.Class?.section ? ` (${sub.Class.section})` : ''}
+                                                            </span>
+                                                            <span className="teaching-detail-sep">·</span>
+                                                            <span className="teaching-detail-subject">{sub.name}</span>
                                                         </span>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <span style={{ fontSize: "0.85rem", color: "#888", fontStyle: "italic" }}>
+                                                <span className="teaching-detail-empty">
                                                     No subjects assigned
                                                 </span>
                                             )}
