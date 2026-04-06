@@ -32,10 +32,11 @@ const TOGGLE_MODULES = [
     { val: 'announcements', label: 'Announcements', icon: '📢', desc: 'Post & manage announcements' },
     { val: 'exams', label: 'Exams', icon: '📝', desc: 'Exam schedules & results' },
     { val: 'collect_fees', label: 'Collect Fees', icon: '💰', desc: 'Collect & view student fees' },
-    { val: 'payment_history', label: 'Payment History', icon: '🧾', desc: 'View payment history & cards' },
+    { val: 'recent_payments', label: 'Recent Payments', icon: '🧾', desc: 'View recent payments section' },
     { val: 'transport', label: 'Transport Fees', icon: '🚌', desc: 'Bus routes & transport fees' },
     { val: 'parents', label: 'Manage Parents', icon: '👨‍👩‍👧', desc: 'View & manage parent records' },
     { val: 'biometric', label: 'Bio-Metric', icon: '🔐', desc: 'Biometric device management' },
+    { val: 'finance', label: 'Finance Dashboard', icon: '📊', desc: 'Financial reports and analytics' },
     { val: 'assignments', label: 'Assignments', icon: '📄', desc: 'View & manage assignments' },
 ];
 

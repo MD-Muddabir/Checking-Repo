@@ -300,7 +300,7 @@ function Fees() {
 
     const tabs = [
         ...(isAdmin || user.permissions?.includes('collect_fees') ? [{ id: 'collect', label: '💰 Collect Fees', icon: '💰' }] : []),
-        ...(isAdmin || user.permissions?.includes('payment_history') ? [{ id: 'history', label: '📋 Payment History', icon: '📋' }] : []),
+        ...(isAdmin || user.permissions?.includes('payment_history') || user.permissions?.includes('recent_payments') ? [{ id: 'history', label: '📋 Payment History', icon: '📋' }] : []),
         ...(isAdmin || hasPerm('fees', 'read') ? [{ id: 'structure', label: '📐 Fee Structures', icon: '📐' }] : []),
     ];
     // Default to first available tab
@@ -434,7 +434,7 @@ function Fees() {
                         <p>Fully Paid</p>
                     </div>
                 </div>
-                {(isAdmin || user.permissions?.includes('payment_history')) && (
+                {(isAdmin || user.permissions?.includes('payment_history') || user.permissions?.includes('recent_payments')) && (
                     <>
                         <div className="stat-card">
                             <div className="stat-icon">💵</div>
@@ -657,7 +657,7 @@ function Fees() {
             )}
 
             {/* ═══ PAYMENT HISTORY TAB ═══ */}
-            {validTab === 'history' && (isAdmin || user.permissions?.includes('payment_history')) && (
+            {validTab === 'history' && (isAdmin || user.permissions?.includes('payment_history') || user.permissions?.includes('recent_payments')) && (
                 <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
                     <div className="card">
                         <h3 style={{ marginBottom: '1rem' }}>💵 Payment Logs</h3>

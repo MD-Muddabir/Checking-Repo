@@ -210,6 +210,8 @@ function AdminDashboard() {
         biometric: '🔐 Biometric',
         notes: '📓 Notes',
         chat: '💬 Chat Monitor',
+        finance: '📊 Finance Dash',
+        recent_payments: '🧾 Recent Payments',
     };
 
     return (
@@ -497,6 +499,8 @@ function AdminDashboard() {
 
                     {hasPermission('fees') && <ActionCard path={`${basePath}/fees`} icon="💰" title="Collect Fees" featureKey="fees" />}
                     {hasPermission('expenses') && <ActionCard path={`${basePath}/expenses`} icon="💸" title="Finances & Transport" featureKey="expenses" />}
+                    {(isAdmin || hasPermission('finance')) && <ActionCard path={`${basePath}/finance`} icon="📊" title="Finance Dashboard" featureKey="reports" highlight />}
+                    {(isAdmin || hasPermission('finance')) && <ActionCard path={`${basePath}/salary`} icon="💼" title="Faculty Salary" featureKey="reports" />}
 
                     {hasPermission('reports') && <ActionCard path={`${basePath}/reports`} icon="📊" title="Reports & Analytics" featureKey="reports" />}
                     {hasPermission('exams') && <ActionCard path={`${basePath}/exams`} icon="📝" title="Manage Exams" featureKey="exams" />}
@@ -533,7 +537,7 @@ function AdminDashboard() {
             </div>
 
             {/* ══════════════ MANAGER: RECENT PAYMENTS ══════════════ */}
-            {user?.role === 'manager' && managerStats?.recentPayments?.length > 0 && (
+            {user?.role === 'manager' && (hasPermission('recent_payments') || hasPermission('payment_history')) && managerStats?.recentPayments?.length > 0 && (
                 <div className="card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         <h3 style={{ margin: 0 }}>💳 Recent Payments Collected</h3>

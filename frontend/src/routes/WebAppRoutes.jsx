@@ -48,6 +48,8 @@ const ManageAdmins = lazy(() => import("../pages/admin/ManageAdmins"));
 const AdminSmartAttendance = lazy(() => import("../pages/admin/SmartAttendance"));
 const AdminExpenses = lazy(() => import("../pages/admin/Expenses"));
 const AdminTimetable = lazy(() => import("../pages/admin/Timetable"));
+const FinanceDashboard = lazy(() => import("../pages/admin/Finance"));
+const FacultySalary = lazy(() => import("../pages/admin/FacultySalary"));
 const AdminFacultyAttendance = lazy(() => import("../pages/admin/FacultyAttendance"));
 const AdminFacultyViewAttendance = lazy(() => import("../pages/admin/AdminFacultyViewAttendance"));
 const AdminManageFacultyAttendance = lazy(() => import("../pages/admin/AdminManageFacultyAttendance"));
@@ -154,6 +156,8 @@ export default function WebAppRoutes() {
                 <Route path="exams" element={<Exams />} />
                 <Route path="timetable" element={<AdminTimetable />} />
                 <Route path="expenses" element={<AdminExpenses />} />
+                <Route path="finance" element={<FinanceDashboard />} />
+                <Route path="salary" element={<FacultySalary />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="notes" element={<AdminNotes />} />
                 <Route path="assignments" element={<AdminAssignments />} />

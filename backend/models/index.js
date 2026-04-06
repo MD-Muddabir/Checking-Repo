@@ -45,6 +45,7 @@ const RazorpayPayment = require("./razorpayPayment");
 const Invoice = require("./invoice");
 const StudentFeePayment = require("./studentFeePayment");
 const OtpVerification = require("./otpVerification");
+const FacultySalary = require("./facultySalary");
 
 // Public Web Page Models
 const InstitutePublicProfile = require("./institutePublicProfile");
@@ -402,6 +403,16 @@ Student.hasMany(StudentFeePayment, { foreignKey: "student_id" });
 StudentFeePayment.belongsTo(User, { as: "collector", foreignKey: "collected_by" });
 User.hasMany(StudentFeePayment, { foreignKey: "collected_by" });
 
+// FacultySalary Associations
+FacultySalary.belongsTo(Institute, { foreignKey: "institute_id" });
+Institute.hasMany(FacultySalary, { foreignKey: "institute_id" });
+
+FacultySalary.belongsTo(Faculty, { foreignKey: "faculty_id" });
+Faculty.hasMany(FacultySalary, { foreignKey: "faculty_id" });
+
+FacultySalary.belongsTo(User, { as: "paidBy", foreignKey: "paid_by" });
+User.hasMany(FacultySalary, { foreignKey: "paid_by" });
+
 module.exports = {
     sequelize,
     Plan,
@@ -454,4 +465,5 @@ module.exports = {
     Invoice,
     StudentFeePayment,
     OtpVerification,
+    FacultySalary,
 };

@@ -166,6 +166,8 @@ app.use("/api/payment", require("./routes/payment.routes"));
 app.use("/api/invoices", require("./routes/invoice.routes"));
 app.use("/api/expenses", require("./routes/expense.routes"));
 app.use("/api/transport-fees", require("./routes/transportFee.routes"));
+app.use("/api/salary", require("./routes/salary.routes"));          // Faculty Salary Management
+app.use("/api/finance", require("./routes/finance.routes"));         // Finance Analytics (Admin Only)
 app.use("/api/manager", require("./routes/manager.routes"));
 app.use("/api/timetable", require("./routes/timetable.routes"));
 // Webhook route already mounted above
@@ -365,6 +367,14 @@ const syncDatabase = async () => {
     try { await sequelize.query(`ALTER TABLE institute_reviews ADD COLUMN sort_order INT DEFAULT 0;`); } catch (e) { }
     try { await sequelize.query(`ALTER TABLE institute_reviews ADD COLUMN is_approved BOOLEAN DEFAULT true;`); } catch (e) { }
     try { await sequelize.query(`ALTER TABLE institute_gallery_photos ADD COLUMN sort_order INT DEFAULT 0;`); } catch (e) { }
+
+    // Finance Module feature columns (Finance.md Phase 6 / Section 6)
+    try { await sequelize.query(`ALTER TABLE plans ADD COLUMN feature_fees BOOLEAN DEFAULT true;`); } catch (e) { }
+    try { await sequelize.query(`ALTER TABLE plans ADD COLUMN feature_salary BOOLEAN DEFAULT false;`); } catch (e) { }
+    try { await sequelize.query(`ALTER TABLE plans ADD COLUMN feature_expenses BOOLEAN DEFAULT false;`); } catch (e) { }
+    try { await sequelize.query(`ALTER TABLE plans ADD COLUMN feature_finance_reports BOOLEAN DEFAULT false;`); } catch (e) { }
+    try { await sequelize.query(`ALTER TABLE plans ADD COLUMN feature_transport_fees BOOLEAN DEFAULT false;`); } catch (e) { }
+    console.log("✅ Finance module feature columns ensured");
 
     // Free Trial columns
     try { await sequelize.query(`ALTER TABLE plans ADD COLUMN is_free_trial BOOLEAN DEFAULT false;`); } catch (e) { }
